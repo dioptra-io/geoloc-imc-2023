@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "geoloc-icm-2023"
+version = "0.1.0"
+description = ""
+authors = ["hugoRimlinger4 <hugorimlinger4@gmail.com>"]
+readme = "README.md"
+packages = [{include = "geoloc_icm_2023"}]
+
+[tool.poetry.dependencies]
+python = "^3.9,<3.11"
+numpy = "^1.21.3"
+pandas = "^1.3.4"
+geoip2 = "^4.4.0"
+dioptra-iris-client = "^0.4.3"
+pych-client = "^0.2.10"
+diamond-miner = "^0.9.1"
+python-dotenv="^0.20.0"
+matplotlib = "^3.4.3"
+plotly = "^5.14.0"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+flake8 = "^4.0.1"
+black = {version = "^21.9b0", allow-prereleases = true}
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.22.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
