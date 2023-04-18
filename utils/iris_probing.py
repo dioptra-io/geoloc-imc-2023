@@ -23,7 +23,7 @@ def get_iris_credentials() -> dict:
     """retrieve credentials from env variables and return them"""
     # try to get credentials with .env file
     try:
-        dotenv_path = Path.cwd() / ".env"
+        dotenv_path = Path.cwd() / "../.env"
 
         config = dotenv_values(str(dotenv_path))
 
@@ -117,7 +117,7 @@ class IrisProber:
                     timeout=None,
                     base_url=self.credentials["base_url"],
                     username=self.credentials["username"],
-                    password="Vader411!",
+                    password=self.credentials["password"],
                 ) as client:
 
                     req = client.get(f"/measurements/{measurement_uuid}")
@@ -145,9 +145,9 @@ class IrisProber:
 
         with IrisClient(
             timeout=None,
-            base_url="https://api.iris.dioptra.io",
-            username="hugorimlinger4@gmail.com",
-            password="Vader411!",
+            base_url=self.credentials["base_url"],
+            username=self.credentials["username"],
+            password=self.credentials["password"],
         ) as client:
 
             # Upload the probes files
@@ -205,6 +205,7 @@ class PingResults:
     def __init__(self, measurement_uuid: str):
 
         self.measurement_uuid: str = measurement_uuid
+        self.iris_credentials = get_iris_credentials()
 
     def measurement_id(self, agent_uuid: str):
         return f"{self.measurement_uuid}__{agent_uuid}"
@@ -218,7 +219,11 @@ class PingResults:
         """
         ping_results = []
 
-        with IrisClient() as iris:
+        with IrisClient(
+            base_url=self.iris_credentials["base_url"],
+            username=self.iris_credentials["username"],
+            password=self.iris_credentials["password"],
+        ) as iris:
             credentials = iris.get(
                 "/users/me/services", params={"measurement_uuid": self.measurement_uuid}
             ).json()

@@ -16,8 +16,6 @@ pych-client = "^0.2.10"
 diamond-miner = "^0.9.1"
 python-dotenv="^0.20.0"
 matplotlib = "^3.4.3"
-plotly = "^5.14.0"
-
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
