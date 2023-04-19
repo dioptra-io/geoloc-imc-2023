@@ -7,7 +7,7 @@ from uuid import UUID
 
 import requests
 
-from utils.iris_probing import IrisProber, PingResults
+from geoloc_imc_2023.iris_probing import IrisProber, PingResults
 
 logger = logging.getLogger()
 

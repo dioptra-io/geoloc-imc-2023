@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from utils.helpers import rtt_to_km
+from geoloc_imc_2023.helpers import rtt_to_km
 
 
 def draw_results(probe_circles, intersections, target):
