@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "geoloc-icm-2023"
+name = "geoloc-imc-2023"
 version = "0.1.0"
 description = ""
 authors = ["hugoRimlinger4 <hugorimlinger4@gmail.com>"]
 readme = "README.md"
-packages = [{include = "geoloc_icm_2023"}]
+packages = [{include = "geoloc_imc_2023"}]
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.11"
