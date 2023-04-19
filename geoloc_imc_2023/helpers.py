@@ -139,55 +139,17 @@ def circle_intersections(circles, speed_threshold=None):
     return filtred_points
 
 
-def polygon_area(points):
-    poly_area = 0
-
-    count = len(points)
-    j = count - 1
-
-    if count < 3:
-        return None
-
-    for i in range(0, count):
-        p1_x, p1_y = points[i]
-        p2_x, p2_y = points[j]
-
-        poly_area += p1_x * p2_y
-        poly_area -= p1_y * p2_x
-        j = i
-
-    poly_area /= 2
-    if np.isnan(poly_area):
-        return None
-
-    return abs(poly_area)
-
-
 def polygon_centroid(points):
-    f_total = 0
-    x_total = 0
-    y_total = 0
-
-    count = len(points)
-    j = count - 1
-
-    if count < 3:
-        return None
-
-    for i in range(0, count):
-        p1_x, p1_y = points[i]
-        p2_x, p2_y = points[j]
-
-        f_total = p1_x * p2_y - p2_x * p1_y
-        x_total += (p1_x + p2_x) * f_total
-        y_total += (p1_y + p2_y) * f_total
-        j = i
-
-    six_area = polygon_area(points) * 6
-    if six_area is None:
-        return None
-
-    return x_total / six_area, y_total / six_area
+    """
+    Compute polygon centroid using Finit Set of point method.
+    (see https://en.wikipedia.org/wiki/Centroid#Of_a_finite_set_of_points)
+    """
+    x = 0
+    y = 0
+    for point in points:
+        x += point[0]
+        y += point[1]
+    return x / len(points), y / len(points)
 
 
 def haversine(input_location, block_location):
