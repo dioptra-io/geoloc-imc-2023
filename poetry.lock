@@ -514,6 +514,14 @@ test = ["pytest (<7.1)", "pytest-asyncio", "testpath"]
 test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.21)", "pandas", "pytest (<7.1)", "pytest-asyncio", "testpath", "trio"]
 
 [[package]]
+name = "ipython-genutils"
+version = "0.2.0"
+description = "Vestigial utilities from IPython"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "jedi"
 version = "0.18.2"
 description = "An autocompletion tool for Python that can be used for text editors."
@@ -656,21 +664,20 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "nbformat"
-version = "5.8.0"
+version = "4.4.0"
 description = "The Jupyter Notebook format"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = "*"
 
 [package.dependencies]
-fastjsonschema = "*"
-jsonschema = ">=2.6"
+ipython-genutils = "*"
+jsonschema = ">=2.4,<2.5.0 || >2.5.0"
 jupyter-core = "*"
-traitlets = ">=5.1"
+traitlets = ">=4.1"
 
 [package.extras]
-docs = ["myst-parser", "pydata-sphinx-theme", "sphinx", "sphinxcontrib-github-alt", "sphinxcontrib-spelling"]
-test = ["pep440", "pre-commit", "pytest", "testpath"]
+test = ["pytest", "pytest-cov", "testpath"]
 
 [[package]]
 name = "nest-asyncio"
@@ -783,6 +790,18 @@ name = "plotly"
 version = "5.14.1"
 description = "An open-source, interactive data visualization library for Python"
 category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+packaging = "*"
+tenacity = ">=6.2.0"
+
+[[package]]
+name = "pluggy"
+version = "0.13.1"
+description = "plugin and hook calling mechanisms for python"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -904,6 +923,14 @@ name = "pyrsistent"
 version = "0.19.3"
 description = "Persistent/Functional/Immutable data structures"
 category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
+name = "pytest"
+version = "5.4.3"
+description = "pytest: simple powerful testing with Python"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -1064,6 +1091,17 @@ doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 name = "tomli"
+version = "1.2.3"
+description = "A lil' TOML parser"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
+name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
 category = "main"
@@ -1160,7 +1198,7 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<3.11"
-content-hash = "815fec70e26642a87c9367f2657e6a4519bee4345c39f59ee006954d90173676"
+content-hash = "1563626798cedcd995560f6bbb46adce56691a753622b6c15f893bfafa9bc4ff"
 
 [metadata.files]
 aiohttp = [
@@ -1724,6 +1762,10 @@ ipython = [
     {file = "ipython-8.12.0-py3-none-any.whl", hash = "sha256:1c183bf61b148b00bcebfa5d9b39312733ae97f6dad90d7e9b4d86c8647f498c"},
     {file = "ipython-8.12.0.tar.gz", hash = "sha256:a950236df04ad75b5bc7f816f9af3d74dc118fd42f2ff7e80e8e60ca1f182e2d"},
 ]
+ipython-genutils = [
+    {file = "ipython_genutils-0.2.0-py2.py3-none-any.whl", hash = "sha256:72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8"},
+    {file = "ipython_genutils-0.2.0.tar.gz", hash = "sha256:eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8"},
+]
 jedi = [
     {file = "jedi-0.18.2-py2.py3-none-any.whl", hash = "sha256:203c1fd9d969ab8f2119ec0a3342e0b49910045abe6af0a3ae83a5764d54639e"},
     {file = "jedi-0.18.2.tar.gz", hash = "sha256:bae794c30d07f6d910d32a7048af09b5a39ed740918da923c6b780790ebac612"},
@@ -1945,8 +1987,8 @@ mypy-extensions = [
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
 nbformat = [
-    {file = "nbformat-5.8.0-py3-none-any.whl", hash = "sha256:d910082bd3e0bffcf07eabf3683ed7dda0727a326c446eeb2922abe102e65162"},
-    {file = "nbformat-5.8.0.tar.gz", hash = "sha256:46dac64c781f1c34dfd8acba16547024110348f9fc7eab0f31981c2a3dc48d1f"},
+    {file = "nbformat-4.4.0-py2.py3-none-any.whl", hash = "sha256:b9a0dbdbd45bb034f4f8893cafd6f652ea08c8c1674ba83f2dc55d3955743b0b"},
+    {file = "nbformat-4.4.0.tar.gz", hash = "sha256:f7494ef0df60766b7cabe0a3651556345a963b74dbc16bc7c18479041170d402"},
 ]
 nest-asyncio = [
     {file = "nest_asyncio-1.5.6-py3-none-any.whl", hash = "sha256:b9a953fb40dceaa587d109609098db21900182b16440652454a146cffb06e8b8"},
@@ -2107,6 +2149,10 @@ plotly = [
     {file = "plotly-5.14.1-py2.py3-none-any.whl", hash = "sha256:a63f3ad9e4cc2e02902a738e5e3e7f3d1307f2732ac71a6c28f1238ed3052826"},
     {file = "plotly-5.14.1.tar.gz", hash = "sha256:bcac86d7fcba3eff7260c1eddc36ca34dae2aded10a0709808446565e0e53b93"},
 ]
+pluggy = [
+    {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
+    {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
+]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.38-py3-none-any.whl", hash = "sha256:45ea77a2f7c60418850331366c81cf6b5b9cf4c7fd34616f733c5427e6abbb1f"},
     {file = "prompt_toolkit-3.0.38.tar.gz", hash = "sha256:23ac5d50538a9a38c8bde05fecb47d0b403ecd0662857a86f886f798563d5b9b"},
@@ -2224,6 +2270,10 @@ pyrsistent = [
     {file = "pyrsistent-0.19.3-cp39-cp39-win_amd64.whl", hash = "sha256:878433581fc23e906d947a6814336eee031a00e6defba224234169ae3d3d6a98"},
     {file = "pyrsistent-0.19.3-py3-none-any.whl", hash = "sha256:ccf0d6bd208f8111179f0c26fdf84ed7c3891982f2edaeae7422575f47e66b64"},
     {file = "pyrsistent-0.19.3.tar.gz", hash = "sha256:1a2994773706bbb4995c31a97bc94f1418314923bd1048c6d964837040376440"},
+]
+pytest = [
+    {file = "pytest-5.4.3-py3-none-any.whl", hash = "sha256:5c0db86b698e8f170ba4582a492248919255fcd4c79b1ee64ace34301fb589a1"},
+    {file = "pytest-5.4.3.tar.gz", hash = "sha256:7979331bfcba207414f5e1263b5a0f8f521d0f457318836a7355531ed1a4c7d8"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
