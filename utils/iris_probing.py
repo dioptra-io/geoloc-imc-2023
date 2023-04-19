@@ -1,23 +1,22 @@
-import os
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
 from uuid import UUID
-from dotenv import dotenv_values
-
-from iris_client import IrisClient
-from pych_client import ClickHouseClient
 
 from diamond_miner.defaults import UNIVERSE_SUBSET
 from diamond_miner.queries.query import ResultsQuery, results_table
 from diamond_miner.typing import IPNetwork
-
+from dotenv import dotenv_values
+from iris_client import IrisClient
+from pych_client import ClickHouseClient
 
 IRIS_CREDENTIAL_PATH = "~/.config/iris/credentials.json"
 
 logger = logging.getLogger()
+
 
 def get_iris_credentials() -> dict:
     """retrieve credentials from env variables and return them"""
@@ -40,7 +39,6 @@ def get_iris_credentials() -> dict:
 
     # try to get credentials with env var directly
     try:
-
         return {
             "base_url": os.environ["IRIS_BASE_URL"],
             "username": os.environ["IRIS_USERNAME"],
@@ -83,12 +81,11 @@ class IrisProber:
         probing_rates: Dict[UUID, int],
         input_file_path: Path = Path("."),
         tags: List[str] = ["atlas_ping_validation"],
-        tool : str = "ping",
+        tool: str = "ping",
         prefix_len: int = 32,
         idle_time: int = 60,
         dry_run: bool = False,
     ) -> None:
-
         self.tags = tags
         self.probing_rates: Dict[UUID, int] = probing_rates
         self.dry_run = True
@@ -119,7 +116,6 @@ class IrisProber:
                     username=self.credentials["username"],
                     password=self.credentials["password"],
                 ) as client:
-
                     req = client.get(f"/measurements/{measurement_uuid}")
                     if req.json()["state"] == "finished":
                         return
@@ -128,10 +124,7 @@ class IrisProber:
 
             time.sleep(10)
 
-    def probe(
-        self,
-        probing_rate = None
-    ) -> Optional[UUID]:
+    def probe(self, probing_rate=None) -> Optional[UUID]:
         """
         Perform measurement using Iris.
         Returns measurement UUID.
@@ -149,7 +142,6 @@ class IrisProber:
             username=self.credentials["username"],
             password=self.credentials["password"],
         ) as client:
-
             # Upload the probes files
             for file_path in file_paths.values():
                 with file_path.open("rb") as fd:
@@ -169,11 +161,13 @@ class IrisProber:
                         {
                             "uuid": str(agent_uuid),
                             "target_file": file_path.name,
-                            "probing_rate": probing_rate if probing_rate else self.probing_rates[agent_uuid],
+                            "probing_rate": probing_rate
+                            if probing_rate
+                            else self.probing_rates[agent_uuid],
                             "tool_parameters": {
                                 "prefix_len_v4": 32,
-                                "prefix_len_v6" : 128,
-                            }
+                                "prefix_len_v6": 128,
+                            },
                         }
                         for agent_uuid, file_path in file_paths.items()
                     ],
@@ -191,19 +185,18 @@ class IrisProber:
 
 class QueryPingResults(ResultsQuery):
     def statement(
-        self,
-        measurement_id: str,
-        subsets: IPNetwork = UNIVERSE_SUBSET
+        self, measurement_id: str, subsets: IPNetwork = UNIVERSE_SUBSET
     ) -> str:
         return f"""
         SELECT *
         FROM {results_table(measurement_id)}
         """
 
+
 class PingResults:
     """get all links discovered during the measurement"""
-    def __init__(self, measurement_uuid: str):
 
+    def __init__(self, measurement_uuid: str):
         self.measurement_uuid: str = measurement_uuid
         self.iris_credentials = get_iris_credentials()
 
@@ -231,11 +224,8 @@ class PingResults:
             measurement_id = self.measurement_id(agent_uuid)
 
         with ClickHouseClient(**credentials["clickhouse"]) as clickhouse:
-
             # retrieve data from clichouse and parse
-            for row in QueryPingResults().execute(
-                clickhouse, measurement_id
-            ):
+            for row in QueryPingResults().execute(clickhouse, measurement_id):
                 ping_results.append(row)
 
         return ping_results

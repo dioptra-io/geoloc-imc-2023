@@ -1,10 +1,7 @@
-import pandas as pd
-import requests
-import time
 import logging
+import time
 
-from utils.helpers import haversine
-
+import requests
 
 logger = logging.getLogger()
 

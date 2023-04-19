@@ -1,6 +1,7 @@
-import numpy as np
 import itertools
-from math import radians,cos, sin, asin, sqrt
+from math import asin, cos, radians, sin, sqrt
+
+import numpy as np
 
 
 def internet_speed(rtt, speed_threshold):
@@ -100,8 +101,8 @@ def circle_intersections(circles, speed_threshold=None):
 
         q = np.dot(x1, x2)
 
-        a = (np.cos(r_1) - np.cos(r_2) * q) / (1 - (q ** 2))
-        b = (np.cos(r_2) - np.cos(r_1) * q) / (1 - (q ** 2))
+        a = (np.cos(r_1) - np.cos(r_2) * q) / (1 - (q**2))
+        b = (np.cos(r_2) - np.cos(r_1) * q) / (1 - (q**2))
 
         x0 = a * x1 + b * x2
 
@@ -205,8 +206,8 @@ def haversine(input_location, block_location):
 
     return 6367 * 2 * np.arcsin(np.sqrt(distances))
 
-def distance(lat1, lat2, lon1, lon2):
 
+def distance(lat1, lat2, lon1, lon2):
     lon1 = radians(lon1)
     lon2 = radians(lon2)
     lat1 = radians(lat1)
@@ -215,11 +216,10 @@ def distance(lat1, lat2, lon1, lon2):
     # Haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
 
     c = 2 * asin(sqrt(a))
 
     r = 6371
 
-    return(c * r)
-
+    return c * r

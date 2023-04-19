@@ -1,16 +1,16 @@
-import requests
-import pickle
 import csv
 import logging
-
+import pickle
 from datetime import datetime
-from uuid import UUID
 from pathlib import Path
+from uuid import UUID
+
+import requests
 
 from utils.iris_probing import IrisProber, PingResults
 
-
 logger = logging.getLogger()
+
 
 def get_from_atlas(url):
     """request atlas api"""
@@ -25,12 +25,11 @@ def get_from_atlas(url):
             break
 
 
-def get_atlas_probes(probe_url = "https://atlas.ripe.net/api/v2/probes/") -> dict:
+def get_atlas_probes(probe_url="https://atlas.ripe.net/api/v2/probes/") -> dict:
     """get all atlas probes with API"""
 
     anchors = {}
     for index, anchor in enumerate(get_from_atlas(probe_url)):
-
         # filter probes based on generic criteria
         if (
             anchor["status"]["name"] != "Connected"
@@ -40,13 +39,12 @@ def get_atlas_probes(probe_url = "https://atlas.ripe.net/api/v2/probes/") -> dic
         ):
             continue
 
-
         anchors[anchor["address_v4"]] = {
-            "id" : anchor["id"],
-            "is_anchor" : anchor["is_anchor"],
-            "country_code" : anchor["country_code"],
-            "latitude" : anchor["geometry"]["coordinates"][1],
-            "longitude" : anchor["geometry"]["coordinates"][0],
+            "id": anchor["id"],
+            "is_anchor": anchor["is_anchor"],
+            "country_code": anchor["country_code"],
+            "latitude": anchor["geometry"]["coordinates"][1],
+            "longitude": anchor["geometry"]["coordinates"][0],
         }
 
     logger.info(f"Number of Atlas probes kept: {len(anchors)}/{index}")
@@ -68,14 +66,14 @@ def generate_iris_probing_file(
     with open(output_file, "w") as f:
         csv_writer = csv.writer(f)
         for probe in probes_atlas:
-            row = [str(probe) + '/32', "icmp",2,50,1]
+            row = [str(probe) + "/32", "icmp", 2, 50, 1]
             csv_writer.writerow(row)
 
 
 def iris_probing(
     probing_rate: int = 5_000,
     agent_uuid: str = "ddd8541d-b4f5-42ce-b163-e3e9bfcd0a47",
-    probe_file: Path =  Path(".") / "../datasets/iris_ping_probing.csv",
+    probe_file: Path = Path(".") / "../datasets/iris_ping_probing.csv",
 ) -> str:
     """perform IRIS ping probing toward every Atlas probes"""
 
@@ -100,11 +98,10 @@ def iris_probing(
 
 
 def validate_atlas_probing(
-    responsive_probe_atlas_file = Path(".") / "../datasets/responsive_probe_atlas.pickle",
-    raw_atlas_probe_file = Path(".") / "../datasets/raw_probe_atlas.pickle",
+    responsive_probe_atlas_file=Path(".") / "../datasets/responsive_probe_atlas.pickle",
+    raw_atlas_probe_file=Path(".") / "../datasets/raw_probe_atlas.pickle",
     agent_uuid: str = "ddd8541d-b4f5-42ce-b163-e3e9bfcd0a47",
 ) -> None:
-
     generate_iris_probing_file()
 
     measurement_uuid = iris_probing(agent_uuid=agent_uuid)
@@ -117,9 +114,8 @@ def validate_atlas_probing(
     responsive_probes = {}
     unresponsive_ip = 0
     for row in ping_results:
-
-        probe_dst = row['probe_dst_addr'].split(":")[-1]
-        rtt = row['rtt']
+        probe_dst = row["probe_dst_addr"].split(":")[-1]
+        rtt = row["rtt"]
 
         try:
             probe_description = raw_atlas_probe[probe_dst]
@@ -129,8 +125,10 @@ def validate_atlas_probing(
 
         responsive_probes[probe_dst] = probe_description
 
-    logger.info(f"Number of Atlas probes kept: {len(responsive_probes)}, rejected : {len(raw_atlas_probe)-len(responsive_probes) }")
+    logger.info(
+        f"Number of Atlas probes kept: {len(responsive_probes)}, rejected : {len(raw_atlas_probe)-len(responsive_probes) }"
+    )
 
     # save results
     with open(responsive_probe_atlas_file, "wb") as f:
-        pickle.dump(responsive_probes,f)
+        pickle.dump(responsive_probes, f)
