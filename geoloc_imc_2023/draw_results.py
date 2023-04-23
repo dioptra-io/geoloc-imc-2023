@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from geoloc_imc_2023.helpers import rtt_to_km
 
 
-def draw_results(probe_circles, intersections, target):
+def draw_results(probe_circles, intersections, centroid, target):
     test_circles = {}
     for key, (lat, lon, rtt, _, _) in probe_circles.items():
         d = rtt_to_km(rtt, 4 / 9)
@@ -62,16 +62,22 @@ def draw_results(probe_circles, intersections, target):
         )
 
     # add calculated intersections
-    print("calculated intersections:")
-    for lat, lon in intersections:
-        print(lat, lon)
-        fig_map3.add_trace(
-            go.Scattermapbox(
-                lat=[lat],
-                lon=[lon],
-                marker=go.scattermapbox.Marker(size=10, color="Red"),
-            )
-        )
+    fig_map3.add_trace(go.Scattermapbox(
+        lat=[int[0] for int in intersections],
+        lon=[int[1] for int in intersections],
+        fill="toself"
+    ))
+    
+    if centroid:
+        print(f"calculated centroid: {centroid}")
+        fig_map3.add_trace(go.Scattermapbox(
+            lat=[centroid[0]],
+            lon=[centroid[1]],
+            marker=go.scattermapbox.Marker(
+                size=10, color="Purple"
+            ),
+        ))
+
 
     print("target:")
     fig_map3.add_trace(

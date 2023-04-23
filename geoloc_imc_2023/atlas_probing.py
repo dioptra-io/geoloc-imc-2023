@@ -7,7 +7,12 @@ logger = logging.getLogger()
 
 
 class RIPEAtlas(object):
-    def __init__(self, account, key):
+    def __init__(
+            self, 
+            account : str, 
+            key: str,
+    ) -> None:
+
         self.account = account
         self.key = key
 
@@ -16,14 +21,13 @@ class RIPEAtlas(object):
             response = requests.get(
                 "https://atlas.ripe.net/api/v2/"
                 f"measurements/{measurement}/results/?key={self.key}"
-            )
+            ).json()
 
-            response = response.json()
             if response:
                 return response
             time.sleep(2)
 
-    def probe(self, target, anchors, nb_packets: int = 3):
+    def probe(self, target, vps, nb_packets: int = 3):
         timeout = 60
         for _ in range(timeout):
             response = requests.post(
@@ -43,8 +47,8 @@ class RIPEAtlas(object):
                         }
                     ],
                     "probes": [
-                        {"value": anchor, "type": "probes", "requested": 1}
-                        for anchor in anchors
+                        {"value": vp, "type": "probes", "requested": 1}
+                        for vp in vps
                     ],
                     "is_oneoff": True,
                     "bill_to": self.account,
@@ -61,14 +65,14 @@ class RIPEAtlas(object):
         else:
             raise Exception("Too much measurements. Stopping.")
 
-        response = self._wait_for(measurement_id, timeout=timeout)
         if not response:
             return
 
         try:
-            return measurement_id, response
+            return measurement_id
         except (IndexError, KeyError):
             return
 
     def __str__(self):
         return "RIPE Atlas"
+    

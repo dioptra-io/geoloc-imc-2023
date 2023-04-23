@@ -1,5 +1,5 @@
 import itertools
-from math import asin, cos, radians, sin, sqrt
+from math import asin, cos, radians, sin, sqrt, pi
 
 import numpy as np
 
@@ -82,6 +82,20 @@ def circle_preprocessing(circles, speed_threshold=None):
 
     return circles_to_keep - circles_to_ignore
 
+def get_points_on_circle(lat_c, lon_c, r_c, nb_points: int = 4):
+    """from a circle, return a set of points"""
+    circle_points = []
+    for k in range(nb_points):
+        # compute
+        angle = pi*2*k/nb_points
+        dx = r_c*1000*cos(angle)
+        dy = r_c*1000*sin(angle)
+        lat = lat_c + (180/pi)*(dy/6378137)
+        lon = lon_c + (180/pi)*(dx/6378137)/cos(lat_c*pi/180)
+
+        circle_points.append((lat, lon))
+    
+    return circle_points
 
 def circle_intersections(circles, speed_threshold=None):
     intersect_points = []
@@ -89,8 +103,16 @@ def circle_intersections(circles, speed_threshold=None):
     circles = circle_preprocessing(circles, speed_threshold=speed_threshold)
 
     if len(circles) <= 2:
-        print(f"Not enough circles ({len(circles)}).")
-        return []
+        if len(circles) == 1:
+            single_circle = list(circles)[0]
+            print(f"only one circle found with coordinates: {single_circle}")
+            lat, lon, rtt, d, r = single_circle
+            filtered_points = get_points_on_circle(lat, lon, d)
+            return filtered_points
+        else:
+            print(f"2 circles, case is not handled yet")
+            # TODO: do something in case we have two circles
+            return []
 
     for c_1, c_2 in itertools.combinations(circles, 2):
         lat_1, lon_1, rtt_1, d_1, r_1 = c_1
