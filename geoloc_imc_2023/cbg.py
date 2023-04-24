@@ -83,6 +83,20 @@ class CBG():
         
         return measurement_ids
 
+    def start_target_measurements(self, target_list: list, vp_list: list, nb_packets: int = NB_PACKETS) -> dict:
+        measurement_ids = {}
+        for _, target_addr in enumerate(target_list):
+            measurement_id = self.start_single_measurement(target_addr, vp_list, nb_packets)
+            measurement_ids[target_addr] = measurement_id
+        return measurement_ids
+
+    def start_single_measurement(self, target_addr: str, vps: list, nb_packets: int = NB_PACKETS):
+        """probe a single target addr with a list of vp"""
+        vp_ids = [self.anchors[vp_addr]['id'] for vp_addr in vps if vp_addr != target_addr]
+        measurement_id = self.driver.probe(str(target_addr), vp_ids, nb_packets)
+
+        return measurement_id
+
 
 if __name__ == "__main__":
 
