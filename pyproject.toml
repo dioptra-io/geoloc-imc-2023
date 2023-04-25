@@ -19,6 +19,8 @@ matplotlib = "^3.4.3"
 plotly = "^5.14.0"
 nbformat = "^4.4.0"
 requests_futures = "^0.9.9"
+seaborn = "^0.12.1"
+
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.22.0"
