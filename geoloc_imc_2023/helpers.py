@@ -98,6 +98,10 @@ def get_points_on_circle(lat_c, lon_c, r_c, nb_points: int = 4):
     return circle_points
 
 def circle_intersections(circles, speed_threshold=None):
+    """
+    Check out this link for more details about the maths:
+    https://gis.stackexchange.com/questions/48937/calculating-intersection-of-two-circles
+    """
     intersect_points = []
 
     circles = circle_preprocessing(circles, speed_threshold=speed_threshold)
