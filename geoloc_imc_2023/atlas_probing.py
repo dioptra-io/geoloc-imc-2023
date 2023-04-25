@@ -3,6 +3,8 @@ import time
 
 import requests
 
+from multiprocessing import Process, Value
+
 logger = logging.getLogger()
 
 
@@ -10,26 +12,27 @@ class RIPEAtlas(object):
     def __init__(
             self, 
             account : str, 
-            key: str,
+            key: str,            
     ) -> None:
 
         self.account = account
         self.key = key
 
-    def _wait_for(self, measurement, timeout=60):
-        for _ in range(timeout):
+        self.id = Value('i', 0)
+
+    def _wait_for(self, measurement_id, max_retry: int =60):
+        for _ in range(max_retry):
             response = requests.get(
                 "https://atlas.ripe.net/api/v2/"
-                f"measurements/{measurement}/results/?key={self.key}"
+                f"measurements/{measurement_id}/results/?key={self.key}"
             ).json()
 
             if response:
                 return response
             time.sleep(2)
 
-    def probe(self, target, vps, nb_packets: int = 3):
-        timeout = 60
-        for _ in range(timeout):
+    def probe(self, target, vps, nb_packets: int = 3, max_retry: int = 60):
+        for _ in range(max_retry):
             response = requests.post(
                 f"https://atlas.ripe.net/api/v2/measurements/?key={self.key}",
                 json={
@@ -72,7 +75,7 @@ class RIPEAtlas(object):
             return measurement_id
         except (IndexError, KeyError):
             return
-
+    
     def __str__(self):
         return "RIPE Atlas"
     

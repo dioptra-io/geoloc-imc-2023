@@ -22,8 +22,7 @@ def get_from_atlas(url: str, max_retry:int = 60):
 
 def retreive_single_measurement(measurement_id: int, anchors: dict, key: str) -> dict:
     """retreive measurement results from RIPE Atlas with measurement id"""
-    measurement = defaultdict(list)
-
+    measurement_results = []
     url = get_measurement_url(measurement_id, key)
 
     response = get_from_atlas(url)
@@ -53,7 +52,7 @@ def retreive_single_measurement(measurement_id: int, anchors: dict, key: str) ->
             vp_lat = anchors[vp_ip]['latitude']
             vp_lon = anchors[vp_ip]['longitude']
 
-            measurement[dst_addr].append({
+            measurement_results.append({
                 "node": vp_ip,
                 "min_rtt": min_rtt,
                 "rtt_list": rtt_list,
@@ -64,7 +63,10 @@ def retreive_single_measurement(measurement_id: int, anchors: dict, key: str) ->
         else:
             print(f"no results: {result}")
 
-    measurement[dst_addr] = sorted(measurement[dst_addr], key = lambda x: x["min_rtt"])
+    measurement_results = sorted(measurement_results, key = lambda x: x["min_rtt"])
 
-    return measurement
+    return {
+        "target_addr": dst_addr,
+        "results": measurement_results,
+    }
     

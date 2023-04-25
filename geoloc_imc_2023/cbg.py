@@ -1,11 +1,7 @@
 import pickle
 import logging
-import requests
-import time
 
-from pathlib import Path
 from random import randint, choice
-from ipaddress import IPv4Network
 from collections import defaultdict
 
 from geoloc_imc_2023.atlas_probing import RIPEAtlas
@@ -28,23 +24,23 @@ def get_prefix_from_ip(addr: str):
 class CBG():
     def __init__(
             self,
-            targets: list,
-            vps: list,
             ripe_credentials: dict[str, str],
             hitlist_addr: dict,
             anchors: dict,
+            nb_target_addr: int = 3,
+            nb_packets: int = 3,
         ) -> None:
 
-        self.targets = targets
-        self.vps = vps
         self.anchors = anchors
         self.hitlist_addr = hitlist_addr
         self.account = ripe_credentials["username"]
         self.key = ripe_credentials["key"]
+        self.nb_target_addr = nb_target_addr
+        self.nb_packets = nb_packets
 
-        self.driver = RIPEAtlas(self.account, self.key)
+        self.driver = RIPEAtlas(self.account, self.key, self.anchors)
 
-    def get_target_hitlist(self, target_prefix: str, hitlist_size: int = 3) -> list[str]:
+    def get_target_hitlist(self, target_prefix: str) -> list[str]:
         """from ip, return a list of target ips"""
         target_addr_list = []
         try:
@@ -52,50 +48,56 @@ class CBG():
         except KeyError:
             pass
 
-        if len(target_addr_list) < hitlist_size:
-            target_addr_list.extend([str(target_prefix[randint(1,254)]) for _ in range(0,hitlist_size - len(target_addr_list))])
-        if len(target_addr_list) > hitlist_size:
-            target_addr_list = target_addr_list[:hitlist_size]
+        if len(target_addr_list) < self.nb_target_addr:
+            target_addr_list.extend([str(target_prefix[randint(1,254)]) for _ in range(0,self.nb_target_addr - len(target_addr_list))])
+        if len(target_addr_list) > self.nb_target_addr:
+            target_addr_list = target_addr_list[:self.nb_target_addr]
 
         return target_addr_list
 
-    def start_init_measurements(self, target_prefixes: list, nb_target_addr: int = 3, nb_packets: int = NB_PACKETS) -> dict:
+    def prefix_probing(self, target_prefixes: list, vps: list, nb_packets: int = NB_PACKETS) -> dict:
         """from a list of prefixes, start measurements for n target addrs in prefix"""
         measurement_ids = defaultdict(list)
         dry_run = False
         for _, target_prefix in enumerate(target_prefixes):
 
             # get target_addr_list
-            target_addr_list = self.get_target_hitlist(target_prefix, nb_target_addr)
+            target_addr_list = self.get_target_hitlist(target_prefix, self.nb_target_addr)
 
-            vp_ids = [self.anchors[vp_addr]['id'] for vp_addr in self.vps if vp_addr not in target_addr_list]
+            vp_ids = [self.anchors[vp_addr]['id'] for vp_addr in vps if vp_addr not in target_addr_list]
 
-            logger.info(f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(self.vps)} self.anchors")    
+            logger.info(f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(vps)} self.anchors")    
 
             for target_addr in target_addr_list:
                 if dry_run:
                     logger.debug(f"measurement for {target_addr}")
                     continue
                 else:
-                    # TODO: parralelize post requests otherwise it takes too much time
                     measurement_id = self.driver.probe(str(target_addr), vp_ids, nb_packets)
                     measurement_ids[target_prefix].append(measurement_id)
         
         return measurement_ids
 
-    def start_target_measurements(self, target_list: list, vp_list: list, nb_packets: int = NB_PACKETS) -> dict:
-        measurement_ids = {}
-        for _, target_addr in enumerate(target_list):
-            measurement_id = self.start_single_measurement(target_addr, vp_list, nb_packets)
-            measurement_ids[target_addr] = measurement_id
+    def target_probing(self, targets: list, vps: list, nb_packets: int = NB_PACKETS) -> dict:
+        """from a list of prefixes, start measurements for n target addrs in prefix"""
+        measurement_ids = defaultdict(list)
+        dry_run = False
+        for _, target_addr in enumerate(targets):
+
+            # get target_addr_list
+            vp_ids = [self.anchors[vp_addr]['id'] for vp_addr in vps if vp_addr != target_addr]
+
+            logger.info(f"starting measurement for {target_addr=} with {len(vps)} self.anchors")    
+
+            for target_addr in target_addr:
+                if dry_run:
+                    logger.debug(f"measurement for {target_addr}")
+                    continue
+                else:
+                    measurement_id = self.driver.probe(str(target_addr), vp_ids, nb_packets)
+                    measurement_ids[target_prefix].append(measurement_id)
+        
         return measurement_ids
-
-    def start_single_measurement(self, target_addr: str, vps: list, nb_packets: int = NB_PACKETS):
-        """probe a single target addr with a list of vp"""
-        vp_ids = [self.anchors[vp_addr]['id'] for vp_addr in vps if vp_addr != target_addr]
-        measurement_id = self.driver.probe(str(target_addr), vp_ids, nb_packets)
-
-        return measurement_id
 
 
 if __name__ == "__main__":
@@ -104,6 +106,7 @@ if __name__ == "__main__":
 
     NB_TARGET = 10
     NB_VP = 10
+
     ripe_credentials = {
         "username": "timur.friedman@sorbonne-universite.fr",
         "key": "b3d3d4fc-724e-4505-befe-1ad16a70dc87",
