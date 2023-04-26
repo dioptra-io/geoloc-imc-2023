@@ -1,9 +1,6 @@
 import logging
 import time
-
 import requests
-
-from multiprocessing import Process, Value
 
 logger = logging.getLogger()
 
@@ -18,8 +15,6 @@ class RIPEAtlas(object):
         self.account = account
         self.key = key
 
-        self.id = Value('i', 0)
-
     def _wait_for(self, measurement_id, max_retry: int =60):
         for _ in range(max_retry):
             response = requests.get(
@@ -31,7 +26,9 @@ class RIPEAtlas(object):
                 return response
             time.sleep(2)
 
-    def probe(self, target, vps, nb_packets: int = 3, max_retry: int = 60):
+    def probe(self, target, vps, tag: str, nb_packets: int = 3, max_retry: int = 60):
+        """start ping measurement towards target from vps, return Atlas measurement id"""
+        
         for _ in range(max_retry):
             response = requests.post(
                 f"https://atlas.ripe.net/api/v2/measurements/?key={self.key}",
@@ -42,6 +39,7 @@ class RIPEAtlas(object):
                             "af": 4,
                             "packets": nb_packets,
                             "size": 48,
+                            "tags": [tag],
                             "description": f"Dioptra Geolocation of {target}",
                             "resolve_on_probe": False,
                             "skip_dns_check": True,
