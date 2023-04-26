@@ -1,9 +1,9 @@
 import logging
 import time
+import uuid
 
+from copy import copy
 from random import randint
-from collections import OrderedDict
-from copy import deepcopy
 from ipaddress import IPv4Network
 
 from geoloc_imc_2023.atlas_probing import RIPEAtlas
@@ -45,6 +45,9 @@ class CBG:
             target_addr_list = targets_per_prefix[target_prefix]
         except KeyError:
             pass
+
+        target_addr_list = list(set(target_addr_list))
+
         if len(target_addr_list) < nb_targets:
             prefix = IPv4Network(target_prefix + "/24")
             target_addr_list.extend(
@@ -53,7 +56,6 @@ class CBG:
                     for _ in range(0, nb_targets - len(target_addr_list))
                 ]
             )
-            print(target_addr_list)
 
         if len(target_addr_list) > nb_targets:
             target_addr_list = target_addr_list[:nb_targets]
@@ -72,7 +74,8 @@ class CBG:
     ) -> dict:
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
-        measurement_ids = OrderedDict()
+        active_measurements = []
+        start_time = time.time()
         for _, target_prefix in enumerate(target_prefixes):
             # get target_addr_list
             target_addr_list = self.get_target_hitlist(
@@ -84,51 +87,45 @@ class CBG:
             ]
 
             logger.info(
-                f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(ids)} vps"
+                f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(vps)} vps"
             )
 
-            for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
-                ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
+            for target_addr in target_addr_list:
+                for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
+                    subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
-                for target_addr in target_addr_list:
-                    if not dry_run:
-                        measurement_id = self.driver.probe(
-                            str(target_addr), ids, tag, nb_packets
-                        )
-                        try:
-                            measurement_ids[target_prefix].append(measurement_id)
-                        except KeyError:
-                            measurement_ids[target_prefix] = [measurement_id]
-
-                    else:
-                        logger.debug(f"measurement for {target_addr}")
-                        measurement_id = 404
-                        try:
-                            measurement_ids[target_addr].append(measurement_id)
-                        except KeyError:
-                            measurement_ids[target_addr] = [measurement_id]
-
-                    # check the numner of running measurements
-                    active_measurements = sum(
-                        [len(target_ids) for target_ids in measurement_ids.values()]
+                    logger.debug(
+                        f"starting measurement for {target_addr=} with {len(subset_vp_ids)}"
                     )
 
-                    # check number of parrallele measurements in not too high
-                    if active_measurements > NB_MAX_CONCURRENT_MEASUREMENTS:
-                        logger.info(
-                            f"Reached limit for number of conccurent measurements: {active_measurements} (limit is {NB_MAX_CONCURRENT_MEASUREMENTS})"
+                    if not dry_run:
+                        measurement_id = self.driver.probe(
+                            str(target_addr), subset_vp_ids, str(tag), nb_packets
                         )
-                        temp_ids = deepcopy(measurement_ids)
-                        for prefix, ids in temp_ids.items():
+                        active_measurements.append(measurement_id)
+
+                    else:
+                        measurement_id = uuid.uuid4()
+                        active_measurements.append(measurement_id)
+
+                    # check number of parrallele measurements in not too high
+                    if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
+                        logger.info(
+                            f"Reached limit for number of conccurent measurements: {len(active_measurements)} (limit is {NB_MAX_CONCURRENT_MEASUREMENTS})"
+                        )
+                        tmp_measurement_ids = copy(active_measurements)
+                        for measurement_id in tmp_measurement_ids:
                             # wait for the last measurement of the batch to end before starting a new one
-                            for id in ids:
-                                if not dry_run:
-                                    resp = self.driver._wait_for(id)
-                                # else: time.sleep(1)
+                            if not dry_run:
+                                resp = self.driver._wait_for(id)
+                            else:
+                                time.sleep(0.5)
 
-                            measurement_ids.pop(prefix)
+                            active_measurements.remove(measurement_id)
 
-        return measurement_ids
+        end_time = time.time()
+
+        return start_time, end_time
 
     def target_probing(
         self,
@@ -140,50 +137,45 @@ class CBG:
     ) -> dict:
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
-        measurement_ids = OrderedDict()
+        active_measurements = []
+        start_time = time.time()
         for _, target_addr in enumerate(targets):
-            # get target_addr_list
+            # get vps id for measurement, remove target if in vps
             vp_ids = [vps[vp_addr]["id"] for vp_addr in vps if vp_addr != target_addr]
 
-            for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
-                ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
+            logger.info(
+                f"starting measurement for {target_addr=} with {len(vp_ids)} vps"
+            )
 
-                logger.info(
-                    f"starting measurement for {target_addr=} with {len(ids)} vps"
-                )
+            for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
+                subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
                 if dry_run:
                     measurement_id = self.driver.probe(
-                        str(target_addr), ids, tag, nb_packets
+                        str(target_addr), subset_vp_ids, str(tag), nb_packets
                     )
 
-                    try:
-                        measurement_ids[target_addr].append(measurement_id)
-                    except KeyError:
-                        measurement_ids[target_addr] = [measurement_id]
+                    active_measurements.append(measurement_id)
+
                 else:
                     measurement_id = 404
-                    try:
-                        measurement_ids[target_addr].append(measurement_id)
-                    except KeyError:
-                        measurement_ids[target_addr] = [measurement_id]
-
-                # check the numner of running measurements
-                active_measurements = sum(
-                    [len(target_ids) for target_ids in measurement_ids.values()]
-                )
+                    active_measurements.append(measurement_id)
 
                 # check number of parrallele measurements in not too high
-                if active_measurements > NB_MAX_CONCURRENT_MEASUREMENTS:
-                    temp_ids = deepcopy(measurement_ids)
-                    for addr, ids in temp_ids.items():
+                if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
+                    logger.info(
+                        f"Reached limit for number of concurrent measurements: {len(active_measurements)} (limit is {NB_MAX_CONCURRENT_MEASUREMENTS})"
+                    )
+                    tmp_measurement_ids = copy(active_measurements)
+                    for measurement_id in tmp_measurement_ids:
                         # wait for the last measurement of the batch to end before starting a new one
-                        for id in ids:
-                            if not dry_run:
-                                resp = self.driver._wait_for(id)
-                            else:
-                                time.sleep(1)
+                        if not dry_run:
+                            resp = self.driver._wait_for(id)
+                        else:
+                            time.sleep(0.5)
 
-                        measurement_ids.pop(addr)
+                        active_measurements.remove(measurement_id)
 
-        return measurement_ids
+        end_time = time.time()
+
+        return start_time, end_time

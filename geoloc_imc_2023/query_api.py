@@ -2,6 +2,8 @@
 import requests
 import time
 
+from collections import defaultdict
+
 
 def get_measurement_url(measurement_id: int, key: str):
     """return Atlas API url for get measurement request"""
@@ -25,6 +27,7 @@ def parse_measurements_results(response: list) -> dict:
     """from get Atlas measurement request return parsed results"""
 
     # parse response
+    measurement_results = defaultdict(list)
     for result in response:
         # parse results and calculate geoloc
         if result.get("result") is not None:
@@ -44,7 +47,7 @@ def parse_measurements_results(response: list) -> dict:
             # get min rtt
             min_rtt = min(rtt_list)
 
-            measurement_results.append(
+            measurement_results[dst_addr].append(
                 {
                     "node": vp_addr,
                     "min_rtt": min_rtt,
@@ -55,12 +58,7 @@ def parse_measurements_results(response: list) -> dict:
         else:
             print(f"no results: {result}")
 
-    measurement_results = sorted(measurement_results, key=lambda x: x["min_rtt"])
-
-    return {
-        "target_addr": dst_addr,
-        "results": measurement_results,
-    }
+    return measurement_results
 
 
 def get_measurement_from_id(measurement_id: int, key: str) -> dict:
@@ -78,13 +76,10 @@ def get_measurement_from_id(measurement_id: int, key: str) -> dict:
 def get_measurements_from_tag(tag: str, key: str) -> dict:
     """retreive all measurements that share the same tag and return parsed measurement results"""
 
-    measurement_results = []
     url = f"https://atlas.ripe.net/api/v2/measurements/tags/{tag}/results/?key={key}"
 
-    responses = requests.get(url).json()
+    response = requests.get(url).json()
 
-    for response in responses:
-        measurement_result = parse_measurements_results(response)
-        measurement_results.append(measurement_result)
+    measurement_results = parse_measurements_results(response)
 
     return measurement_results
