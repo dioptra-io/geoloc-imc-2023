@@ -75,6 +75,7 @@ class CBG:
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
         active_measurements = []
+        all_measurement_ids = []
         start_time = time.time()
         for _, target_prefix in enumerate(target_prefixes):
             # get target_addr_list
@@ -102,11 +103,11 @@ class CBG:
                         measurement_id = self.driver.probe(
                             str(target_addr), subset_vp_ids, str(tag), nb_packets
                         )
-                        active_measurements.append(measurement_id)
-
                     else:
                         measurement_id = uuid.uuid4()
-                        active_measurements.append(measurement_id)
+
+                    active_measurements.append(measurement_id)
+                    all_measurement_ids.append(measurement_id)
 
                     # check number of parrallele measurements in not too high
                     if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
@@ -117,15 +118,17 @@ class CBG:
                         for measurement_id in tmp_measurement_ids:
                             # wait for the last measurement of the batch to end before starting a new one
                             if not dry_run:
-                                resp = self.driver._wait_for(id)
+                                resp = self.driver._wait_for(measurement_id)
                             else:
                                 time.sleep(0.5)
 
                             active_measurements.remove(measurement_id)
 
+        logger.info(f"measurement : {tag} done")
+
         end_time = time.time()
 
-        return start_time, end_time
+        return all_measurement_ids, start_time, end_time
 
     def target_probing(
         self,
@@ -138,44 +141,46 @@ class CBG:
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
         active_measurements = []
+        all_measurement_ids = []
         start_time = time.time()
         for _, target_addr in enumerate(targets):
             # get vps id for measurement, remove target if in vps
             vp_ids = [vps[vp_addr]["id"] for vp_addr in vps if vp_addr != target_addr]
 
-            logger.info(
-                f"starting measurement for {target_addr=} with {len(vp_ids)} vps"
-            )
-
             for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                 subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
-                if dry_run:
+                logger.debug(
+                    f"starting measurement for {target_addr=} with {len(subset_vp_ids)} vps"
+                )
+
+                if not dry_run:
                     measurement_id = self.driver.probe(
                         str(target_addr), subset_vp_ids, str(tag), nb_packets
                     )
-
-                    active_measurements.append(measurement_id)
-
                 else:
                     measurement_id = 404
-                    active_measurements.append(measurement_id)
 
-                # check number of parrallele measurements in not too high
+                active_measurements.append(measurement_id)
+                all_measurement_ids.append(measurement_id)
+
+                # check number of parallel measurements in not too high
                 if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
                     logger.info(
-                        f"Reached limit for number of concurrent measurements: {len(active_measurements)} (limit is {NB_MAX_CONCURRENT_MEASUREMENTS})"
+                        f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                     )
                     tmp_measurement_ids = copy(active_measurements)
                     for measurement_id in tmp_measurement_ids:
                         # wait for the last measurement of the batch to end before starting a new one
                         if not dry_run:
-                            resp = self.driver._wait_for(id)
+                            resp = self.driver._wait_for(measurement_id)
                         else:
                             time.sleep(0.5)
 
                         active_measurements.remove(measurement_id)
 
+        logger.info(f"measurement : {tag} done")
+
         end_time = time.time()
 
-        return start_time, end_time
+        return all_measurement_ids, start_time, end_time

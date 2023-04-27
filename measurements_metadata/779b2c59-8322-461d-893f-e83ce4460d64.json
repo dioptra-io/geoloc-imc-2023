@@ -1,0 +1,48 @@
+{
+    "UUID": "779b2c59-8322-461d-893f-e83ce4460d64",
+    "is_dry_run": false,
+    "description": "measurement towards all anchors with all probes as vps",
+    "type": "target prefix",
+    "af": 4,
+    "targets": [
+        "213.225.160.239",
+        "145.220.0.55"
+    ],
+    "vps": {
+        "45.138.229.91": {
+            "id": 60052,
+            "is_anchor": false,
+            "country_code": "NL",
+            "latitude": 52.3685,
+            "longitude": 4.8995
+        },
+        "77.174.76.85": {
+            "id": 10003,
+            "is_anchor": false,
+            "country_code": "NL",
+            "latitude": 52.3685,
+            "longitude": 4.9375
+        },
+        "82.217.219.124": {
+            "id": 7,
+            "is_anchor": false,
+            "country_code": "NL",
+            "latitude": 51.2005,
+            "longitude": 6.0075
+        },
+        "83.81.82.33": {
+            "id": 8,
+            "is_anchor": false,
+            "country_code": "NL",
+            "latitude": 51.2315,
+            "longitude": 6.0375
+        },
+        "193.0.0.78": {
+            "id": 15,
+            "is_anchor": false,
+            "country_code": "NL",
+            "latitude": 52.3795,
+            "longitude": 4.8975
+        }
+    }
+}

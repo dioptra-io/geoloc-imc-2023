@@ -1,14 +1,18 @@
 """all functions to query RIPE Atlas API"""
 import requests
 import time
+import json
+import logging
 
 from collections import defaultdict
 
+logger = logging.getLogger()
 
-def get_measurement_url(measurement_id: int, key: str):
+
+def get_measurement_url(measurement_id: int):
     """return Atlas API url for get measurement request"""
 
-    return f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/?key={key}"
+    return f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/"
 
 
 def get_from_atlas(url: str, max_retry: int = 60):
@@ -56,15 +60,15 @@ def parse_measurements_results(response: list) -> dict:
             )
 
         else:
-            print(f"no results: {result}")
+            logger.warning(f"no results: {result}")
 
     return measurement_results
 
 
-def get_measurement_from_id(measurement_id: int, key: str) -> dict:
-    """retreive measurement results from RIPE Atlas with measurement id"""
+def get_measurement_from_id(measurement_id: int) -> dict:
+    """retrieve measurement results from RIPE Atlas with measurement id"""
 
-    url = get_measurement_url(measurement_id, key)
+    url = get_measurement_url(measurement_id)
 
     response = get_from_atlas(url)
 
@@ -73,12 +77,21 @@ def get_measurement_from_id(measurement_id: int, key: str) -> dict:
     return measurement_result
 
 
-def get_measurements_from_tag(tag: str, key: str) -> dict:
-    """retreive all measurements that share the same tag and return parsed measurement results"""
+def get_measurements_from_tag(tag: str) -> dict:
+    """retrieve all measurements that share the same tag and return parsed measurement results"""
 
-    url = f"https://atlas.ripe.net/api/v2/measurements/tags/{tag}/results/?key={key}"
+    url = f"https://atlas.ripe.net/api/v2/measurements/tags/{tag}/results/"
 
-    response = requests.get(url).json()
+    response = requests.get(url)
+
+    # small parsing, as response might not be Json formatted
+    try:
+        response = json.loads(response.content)
+    except json.JSONDecodeError:
+        response = response.content.decode()
+        response = response.replace("}{", "}, {")
+        response = response.replace("} {", "}, {")
+        response = json.loads(response)
 
     measurement_results = parse_measurements_results(response)
 

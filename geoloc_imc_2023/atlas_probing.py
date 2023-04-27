@@ -7,19 +7,17 @@ logger = logging.getLogger()
 
 class RIPEAtlas(object):
     def __init__(
-            self, 
-            account : str, 
-            key: str,            
+        self,
+        account: str,
+        key: str,
     ) -> None:
-
         self.account = account
         self.key = key
 
-    def _wait_for(self, measurement_id, max_retry: int =60):
+    def _wait_for(self, measurement_id, max_retry: int = 60):
         for _ in range(max_retry):
             response = requests.get(
-                "https://atlas.ripe.net/api/v2/"
-                f"measurements/{measurement_id}/results/?key={self.key}"
+                f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/"
             ).json()
 
             if response:
@@ -28,7 +26,7 @@ class RIPEAtlas(object):
 
     def probe(self, target, vps, tag: str, nb_packets: int = 3, max_retry: int = 60):
         """start ping measurement towards target from vps, return Atlas measurement id"""
-        
+
         for _ in range(max_retry):
             response = requests.post(
                 f"https://atlas.ripe.net/api/v2/measurements/?key={self.key}",
@@ -48,8 +46,7 @@ class RIPEAtlas(object):
                         }
                     ],
                     "probes": [
-                        {"value": vp, "type": "probes", "requested": 1}
-                        for vp in vps
+                        {"value": vp, "type": "probes", "requested": 1} for vp in vps
                     ],
                     "is_oneoff": True,
                     "bill_to": self.account,
@@ -73,7 +70,6 @@ class RIPEAtlas(object):
             return measurement_id
         except (IndexError, KeyError):
             return
-    
+
     def __str__(self):
         return "RIPE Atlas"
-    
