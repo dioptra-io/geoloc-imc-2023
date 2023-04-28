@@ -88,7 +88,7 @@ class CBG:
             ]
 
             logger.debug(
-                f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]}"
+                f"starting measurement for {target_prefix} with {[addr for addr in target_addr_list]}"
             )
 
             for target_addr in target_addr_list:
@@ -96,7 +96,7 @@ class CBG:
                     subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
                     logger.debug(
-                        f"starting measurement for {target_addr=} with {len(subset_vp_ids)} vps"
+                        f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                     )
 
                     if not dry_run:
@@ -151,7 +151,7 @@ class CBG:
                 subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
                 logger.debug(
-                    f"starting measurement for {target_addr=} with {len(subset_vp_ids)} vps"
+                    f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                 )
 
                 if not dry_run:
