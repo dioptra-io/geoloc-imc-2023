@@ -19,7 +19,7 @@ def internet_speed(rtt, speed_threshold):
 
 
 def rtt_to_km(rtt, speed_threshold=None, c=300):
-    return internet_speed(rtt, speed_threshold) * rtt * c
+    return internet_speed(rtt, speed_threshold) * rtt * c / 2
 
 
 def is_within_cirle(vp_geo, rtt, candidate_geo, speed_threshold=None):
