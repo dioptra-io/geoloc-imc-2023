@@ -84,7 +84,7 @@ if __name__ == "__main__":
     cbg = CBG(RIPE_CREDENTIALS)
 
     logger.info(
-        f"Starting measurements {measurement_uuid} with parameters: {dry_run=}; nb_targets={len(targets)}; nb_vps={len(vps)}"
+        f"Starting measurements {measurement_uuid} with parameters: {dry_run}; nb_targets={len(targets)}; nb_vps={len(vps)}"
     )
 
     # get target prefixes
