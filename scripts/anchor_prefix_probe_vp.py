@@ -35,6 +35,9 @@ if __name__ == "__main__":
     else:
         dry_run = False
 
+    nb_targets = args.nb_targets
+    nb_vps = args.nb_vps
+
     # generate measurement UUID
     measurement_uuid = uuid.uuid4()
 
