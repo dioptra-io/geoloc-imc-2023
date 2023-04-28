@@ -45,7 +45,7 @@ if __name__ == "__main__":
         level=logging.DEBUG,
     )
 
-    logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+    logger = logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
     logger = logging.getLogger()
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     cbg = CBG(RIPE_CREDENTIALS)
 
     logger.info(
-        f"Starting measurements {measurement_uuid} with parameters: {dry_run=} , nb_targets={len(nb_targets)}; nb_vps{len(nb_vps)}"
+        f"Starting measurements {measurement_uuid} with parameters: {dry_run=}; nb_targets={len(targets)}; nb_vps={len(vps)}"
     )
 
     # get target prefixes

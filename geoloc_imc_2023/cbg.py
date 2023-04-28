@@ -87,16 +87,16 @@ class CBG:
                 vps[vp_addr]["id"] for vp_addr in vps if vp_addr not in target_addr_list
             ]
 
-            for target_addr in target_addr_list:
-                logger.debug(
-                    f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(vps)} vps"
-                )
+            logger.debug(
+                f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]}"
+            )
 
+            for target_addr in target_addr_list:
                 for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                     subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
                     logger.debug(
-                        f"starting measurement for {target_addr=} with {len(subset_vp_ids)}"
+                        f"starting measurement for {target_addr=} with {len(subset_vp_ids)} vps"
                     )
 
                     if not dry_run:
