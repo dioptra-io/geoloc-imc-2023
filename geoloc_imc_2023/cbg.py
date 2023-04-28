@@ -29,7 +29,7 @@ def get_prefix_from_ip(addr: str):
 class CBG:
     def __init__(
         self,
-        ripe_credentials: dict[str, str],
+        ripe_credentials: dict,
     ) -> None:
         self.account = ripe_credentials["username"]
         self.key = ripe_credentials["key"]
@@ -38,7 +38,7 @@ class CBG:
 
     def get_target_hitlist(
         self, target_prefix: str, nb_targets: int, targets_per_prefix: dict
-    ) -> list[str]:
+    ) -> list:
         """from ip, return a list of target ips"""
         target_addr_list = []
         try:
