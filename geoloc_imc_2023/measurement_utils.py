@@ -2,12 +2,11 @@ import pickle
 import requests
 import json
 
-from pathlib import Path
-
-from geoloc_imc_2023.helpers import distance
 from geoloc_imc_2023.default import (
-    ANCHORS_PATH,
-    PROBES_PATH,
+    ANCHORS_FILE,
+    PROBES_FILE,
+    HITLIST_FILE,
+    MEASUREMENT_CONFIG_PATH,
 )
 
 
@@ -41,31 +40,32 @@ def get_atlas_probes() -> dict:
     geoloc_disputed = 0
     for _, probe in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
         # filter probes based on generic criteria
-        if (
-            probe["status"]["name"] != "Connected"
-            or probe.get("geometry") is None
-            or probe.get("address_v4") is None
-            or probe.get("country_code") is None
-            or probe.get("geometry") is None
-        ):
-            rejected += 1
-            continue
+        if not probe["is_anchor"]:
+            if (
+                probe["status"]["name"] != "Connected"
+                or probe.get("geometry") is None
+                or probe.get("address_v4") is None
+                or probe.get("country_code") is None
+                or probe.get("geometry") is None
+            ):
+                rejected += 1
+                continue
 
-        if is_geoloc_disputed(probe):
-            geoloc_disputed += 1
-            continue
+            if is_geoloc_disputed(probe):
+                geoloc_disputed += 1
+                continue
 
-        probes[probe["address_v4"]] = {
-            "id": probe["id"],
-            "ip": probe["address_v4"],
-            "is_anchor": probe["is_anchor"],
-            "country_code": probe["country_code"],
-            "latitude": probe["geometry"]["coordinates"][1],
-            "longitude": probe["geometry"]["coordinates"][0],
-        }
+            probes[probe["address_v4"]] = {
+                "id": probe["id"],
+                "ip": probe["address_v4"],
+                "is_anchor": probe["is_anchor"],
+                "country_code": probe["country_code"],
+                "latitude": probe["geometry"]["coordinates"][1],
+                "longitude": probe["geometry"]["coordinates"][0],
+            }
 
     # cache probes
-    with open(PROBES_PATH, "wb") as f:
+    with open(PROBES_FILE, "wb") as f:
         pickle.dump(probes, f)
 
     return probes, rejected, geoloc_disputed
@@ -77,22 +77,22 @@ def get_atlas_anchors() -> dict:
     rejected = 0
     geoloc_disputed = 0
     for _, anchor in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
-        # filter probes based on generic criteria
-        if (
-            anchor["status"]["name"] != "Connected"
-            or anchor.get("geometry") is None
-            or anchor.get("address_v4") is None
-            or anchor.get("country_code") is None
-            or anchor.get("geometry") is None
-        ):
-            rejected += 1
-            continue
-
-        if is_geoloc_disputed(anchor):
-            geoloc_disputed += 1
-            continue
-
+        # filter anchors based on generic criteria
         if anchor["is_anchor"]:
+            if (
+                anchor["status"]["name"] != "Connected"
+                or anchor.get("geometry") is None
+                or anchor.get("address_v4") is None
+                or anchor.get("country_code") is None
+                or anchor.get("geometry") is None
+            ):
+                rejected += 1
+                continue
+
+            if is_geoloc_disputed(anchor):
+                geoloc_disputed += 1
+                continue
+
             anchors[anchor["address_v4"]] = {
                 "id": anchor["id"],
                 "is_anchor": anchor["is_anchor"],
@@ -102,7 +102,7 @@ def get_atlas_anchors() -> dict:
             }
 
     # cache anchor
-    with open(ANCHORS_PATH, "wb") as f:
+    with open(ANCHORS_FILE, "wb") as f:
         pickle.dump(anchors, f)
 
     return anchors, rejected, geoloc_disputed
@@ -110,7 +110,7 @@ def get_atlas_anchors() -> dict:
 
 def load_atlas_probes() -> dict:
     """return cached probes"""
-    with open(PROBES_PATH, "rb") as f:
+    with open(PROBES_FILE, "rb") as f:
         probes = pickle.load(f)
 
     return probes
@@ -118,7 +118,22 @@ def load_atlas_probes() -> dict:
 
 def load_atlas_anchors() -> dict:
     """return cached anchors"""
-    with open(ANCHORS_PATH, "rb") as f:
+    with open(ANCHORS_FILE, "rb") as f:
         anchors = pickle.load(f)
 
     return anchors
+
+
+def load_prefix_hitlist() -> dict:
+    """return target list dataset for all prefixes in /24"""
+    with open(HITLIST_FILE, "rb") as f:
+        targets_per_prefix = pickle.load(f)
+
+    return targets_per_prefix
+
+
+def save_config_file(measurement_config: dict) -> None:
+    """save measurement config file"""
+    file_path = MEASUREMENT_CONFIG_PATH / f"{measurement_config['UUID']}.json"
+    with open(file_path, "w") as f:
+        json.dump(measurement_config, f, indent=4)

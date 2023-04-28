@@ -14,13 +14,13 @@ class RIPEAtlas(object):
         self.account = account
         self.key = key
 
-    def _wait_for(self, measurement_id, max_retry: int = 60):
+    def _wait_for(self, measurement_id, max_retry: int = 150):
         for _ in range(max_retry):
             response = requests.get(
-                f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/"
+                f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/"
             ).json()
 
-            if response:
+            if response["status"]["name"] == "Ongoing":
                 return response
             time.sleep(2)
 

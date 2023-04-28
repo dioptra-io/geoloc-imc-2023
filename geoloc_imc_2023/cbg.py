@@ -87,11 +87,11 @@ class CBG:
                 vps[vp_addr]["id"] for vp_addr in vps if vp_addr not in target_addr_list
             ]
 
-            logger.info(
-                f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(vps)} vps"
-            )
-
             for target_addr in target_addr_list:
+                logger.debug(
+                    f"starting measurement for {target_prefix=} with {[addr for addr in target_addr_list]} with {len(vps)} vps"
+                )
+
                 for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                     subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
@@ -104,7 +104,7 @@ class CBG:
                             str(target_addr), subset_vp_ids, str(tag), nb_packets
                         )
                     else:
-                        measurement_id = uuid.uuid4()
+                        measurement_id = 404
 
                     active_measurements.append(measurement_id)
                     all_measurement_ids.append(measurement_id)
@@ -112,17 +112,17 @@ class CBG:
                     # check number of parrallele measurements in not too high
                     if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
                         logger.info(
-                            f"Reached limit for number of conccurent measurements: {len(active_measurements)} (limit is {NB_MAX_CONCURRENT_MEASUREMENTS})"
+                            f"Reached limit for number of conccurent measurements: {len(active_measurements)}"
                         )
                         tmp_measurement_ids = copy(active_measurements)
-                        for measurement_id in tmp_measurement_ids:
+                        for id in tmp_measurement_ids:
                             # wait for the last measurement of the batch to end before starting a new one
                             if not dry_run:
-                                resp = self.driver._wait_for(measurement_id)
+                                resp = self.driver._wait_for(id)
                             else:
                                 time.sleep(0.5)
 
-                            active_measurements.remove(measurement_id)
+                            active_measurements.remove(id)
 
         logger.info(f"measurement : {tag} done")
 
@@ -170,14 +170,14 @@ class CBG:
                         f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                     )
                     tmp_measurement_ids = copy(active_measurements)
-                    for measurement_id in tmp_measurement_ids:
+                    for id in tmp_measurement_ids:
                         # wait for the last measurement of the batch to end before starting a new one
                         if not dry_run:
-                            resp = self.driver._wait_for(measurement_id)
+                            resp = self.driver._wait_for(id)
                         else:
                             time.sleep(0.5)
 
-                        active_measurements.remove(measurement_id)
+                        active_measurements.remove(id)
 
         logger.info(f"measurement : {tag} done")
 
