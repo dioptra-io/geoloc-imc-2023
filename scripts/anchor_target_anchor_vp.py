@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dry_run",
         help="boolean, decide wether or not to start actual probing, set to True for testing",
-        type=bool,
+        action="store_true",
     )
     parser.add_argument(
         "--nb_targets", help="define the number of targets to measure", type=int
@@ -28,9 +28,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    dry_run = args.dry_run
-    nb_targets = args.nb_targets
-    nb_vps = args.nb_vps
+    if args.dry_run:
+        dry_run = True
+    else:
+        dry_run = False
 
     # generate measurement UUID
     measurement_uuid = uuid.uuid4()
