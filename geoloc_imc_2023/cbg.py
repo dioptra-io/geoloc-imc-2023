@@ -7,6 +7,7 @@ from random import randint
 from ipaddress import IPv4Network
 
 from geoloc_imc_2023.atlas_probing import RIPEAtlas
+from geoloc_imc_2023.query_api import get_measurement_from_id
 from geoloc_imc_2023.default import (
     NB_PACKETS,
     NB_TARGETS_PER_PREFIX,
@@ -109,20 +110,21 @@ class CBG:
                     active_measurements.append(measurement_id)
                     all_measurement_ids.append(measurement_id)
 
-                    # check number of parrallele measurements in not too high
+                    # check number of parallel measurements in not too high
                     if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
                         logger.info(
-                            f"Reached limit for number of conccurent measurements: {len(active_measurements)}"
+                            f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                         )
                         tmp_measurement_ids = copy(active_measurements)
                         for id in tmp_measurement_ids:
                             # wait for the last measurement of the batch to end before starting a new one
                             if not dry_run:
-                                resp = self.driver._wait_for(id)
+                                measurement_result = self.driver._wait_for(id)
+                                if measurement_result:
+                                    active_measurements.remove(id)
                             else:
+                                active_measurements.remove(id)
                                 time.sleep(0.5)
-
-                            active_measurements.remove(id)
 
         logger.info(f"measurement : {tag} done")
 
@@ -173,11 +175,12 @@ class CBG:
                     for id in tmp_measurement_ids:
                         # wait for the last measurement of the batch to end before starting a new one
                         if not dry_run:
-                            resp = self.driver._wait_for(id)
+                            measurement_result = self.driver._wait_for(id)
+                            if measurement_result:
+                                active_measurements.remove(id)
                         else:
+                            active_measurements.remove(id)
                             time.sleep(0.5)
-
-                        active_measurements.remove(id)
 
         logger.info(f"measurement : {tag} done")
 

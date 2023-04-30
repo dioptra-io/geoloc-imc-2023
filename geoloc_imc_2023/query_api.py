@@ -6,6 +6,8 @@ import logging
 
 from collections import defaultdict
 
+from geoloc_imc_2023.default import RIPE_CREDENTIALS
+
 logger = logging.getLogger()
 
 
@@ -15,14 +17,14 @@ def get_measurement_url(measurement_id: int):
     return f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/"
 
 
-def get_from_atlas(url: str, max_retry: int = 60):
+def get_from_atlas(url: str, max_retry: int = 60, wait_time: int = 5):
     """request to Atlas API"""
 
     for _ in range(max_retry):
         response = requests.get(url, timeout=20).json()
         if response:
             break
-        time.sleep(2)
+        time.sleep(wait_time)
 
     return response
 
@@ -65,12 +67,16 @@ def parse_measurements_results(response: list) -> dict:
     return measurement_results
 
 
-def get_measurement_from_id(measurement_id: int) -> dict:
+def get_measurement_from_id(
+    measurement_id: int,
+    max_retry: int = 60,
+    wait_time: int = 10,
+) -> dict:
     """retrieve measurement results from RIPE Atlas with measurement id"""
 
     url = get_measurement_url(measurement_id)
 
-    response = get_from_atlas(url)
+    response = get_from_atlas(url, max_retry=max_retry, wait_time=wait_time)
 
     measurement_result = parse_measurements_results(response)
 

@@ -6,6 +6,7 @@ DEFAULT_DIR: Path = Path(__file__).resolve().parent
 
 # output path
 LOG_PATH: Path = DEFAULT_DIR / "../log/"
+CACHE_PATH: Path = DEFAULT_DIR / "../cache/"
 RESULT_PATH: Path = DEFAULT_DIR / "../result/"
 MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / "../measurement_config/"
 
@@ -13,6 +14,12 @@ MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / "../measurement_config/"
 HITLIST_FILE: Path = DEFAULT_DIR / "../datasets/parsed_hitlist.pickle"
 ANCHORS_FILE: Path = DEFAULT_DIR / "../datasets/anchors.pickle"
 PROBES_FILE: Path = DEFAULT_DIR / "../datasets/probes.pickle"
+
+# cache files
+ANCHOR_TARGET_ANCHOR_VP: Path = DEFAULT_DIR / "../cache/anchor_target_anchor_vp.pickle"
+ANCHOR_TARGET_PROBE_VP: Path = DEFAULT_DIR / "../cache/anchor_target_probe_vp.pickle"
+ANCHOR_PREFIX_ANCHOR_VP: Path = DEFAULT_DIR / "../cache/anchor_prefix_anchor_vp.pickle"
+ANCHOR_PREFIX_PROBE_VP: Path = DEFAULT_DIR / "../cache/anchor_prefix_probe_vp.pickle"
 
 # constant
 MAX_NUMBER_OF_VPS = 20

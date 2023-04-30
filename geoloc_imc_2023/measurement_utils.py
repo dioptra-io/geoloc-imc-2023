@@ -1,16 +1,31 @@
 import pickle
 import requests
 import json
+import logging
+import time
 
+from ipaddress import IPv4Network
+from random import randint
+from copy import copy
+
+from geoloc_imc_2023.atlas_probing import RIPEAtlas
+from geoloc_imc_2023.query_api import get_measurement_from_id
 from geoloc_imc_2023.default import (
     ANCHORS_FILE,
     PROBES_FILE,
     HITLIST_FILE,
     MEASUREMENT_CONFIG_PATH,
+    NB_PACKETS,
+    MAX_NUMBER_OF_VPS,
+    NB_TARGETS_PER_PREFIX,
+    NB_MAX_CONCURRENT_MEASUREMENTS,
 )
+
+logger = logging.getLogger()
 
 
 def get_from_atlas(url):
+    """get request url atlas endpoint"""
     response = requests.get(url).json()
     while True:
         for anchor in response["results"]:
@@ -137,3 +152,30 @@ def save_config_file(measurement_config: dict) -> None:
     file_path = MEASUREMENT_CONFIG_PATH / f"{measurement_config['UUID']}.json"
     with open(file_path, "w") as f:
         json.dump(measurement_config, f, indent=4)
+
+
+def get_target_hitlist(
+    target_prefix: str, nb_targets: int, targets_per_prefix: dict
+) -> list:
+    """from ip, return a list of target ips"""
+    target_addr_list = []
+    try:
+        target_addr_list = targets_per_prefix[target_prefix]
+    except KeyError:
+        pass
+
+    target_addr_list = list(set(target_addr_list))
+
+    if len(target_addr_list) < nb_targets:
+        prefix = IPv4Network(target_prefix + "/24")
+        target_addr_list.extend(
+            [
+                str(prefix[randint(1, 254)])
+                for _ in range(0, nb_targets - len(target_addr_list))
+            ]
+        )
+
+    if len(target_addr_list) > nb_targets:
+        target_addr_list = target_addr_list[:nb_targets]
+
+    return target_addr_list

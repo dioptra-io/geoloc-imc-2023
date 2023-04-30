@@ -3,9 +3,10 @@ import logging
 import sys
 import uuid
 import argparse
+import pickle
 
 from geoloc_imc_2023.cbg import CBG, get_prefix_from_ip
-from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS
+from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS, ANCHOR_PREFIX_ANCHOR_VP
 from geoloc_imc_2023.measurement_utils import (
     load_atlas_anchors,
     load_prefix_hitlist,
@@ -22,6 +23,11 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
+        "--use_cache",
+        help="boolean, decide wether or not to start actual probing, set to True for testing",
+        action="store_true",
+    )
+    parser.add_argument(
         "--nb_targets", help="define the number of targets to measure", type=int
     )
     parser.add_argument(
@@ -33,6 +39,11 @@ if __name__ == "__main__":
         dry_run = True
     else:
         dry_run = False
+
+    if args.use_cache:
+        use_cache = True
+    else:
+        use_cache = False
 
     nb_targets = args.nb_targets
     nb_vps = args.nb_vps
@@ -61,7 +72,7 @@ if __name__ == "__main__":
     targets = list(anchors.keys())[:nb_targets]
     vps = {}
     for i, anchor in enumerate(anchors):
-        if i >= nb_vps:
+        if len(vps) >= nb_vps:
             break
         vps[anchor] = anchors[anchor]
 
@@ -90,6 +101,24 @@ if __name__ == "__main__":
     for target_addr in targets:
         target_prefix = get_prefix_from_ip(target_addr)
         target_prefixes.append(target_prefix)
+
+    try:
+        with open(ANCHOR_PREFIX_ANCHOR_VP, "rb") as f:
+            cached_results = pickle.load(f)
+
+        logger.info(f"{len(set(target_prefixes))}")
+        logger.info(
+            f"initial length targets: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+        )
+
+        target_prefixes = list(set(target_prefixes).difference(set(cached_results)))
+
+        logger.info(
+            f"after removing cached: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+        )
+    except FileNotFoundError:
+        logger.info("no cached results available")
+        pass
 
     # measurement for 3 targets in every target prefixes
     (
