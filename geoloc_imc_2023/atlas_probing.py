@@ -17,12 +17,16 @@ class RIPEAtlas(object):
     def _wait_for(self, measurement_id, max_retry: int = 30):
         for _ in range(max_retry):
             response = requests.get(
-                f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/result"
+                f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/"
             ).json()
 
-            if response:
+            # check if measurement is ongoing or not
+            if response["status"]["name"] != "Ongoing":
                 return response
+
             time.sleep(10)
+
+        return None
 
     def probe(self, target, vps, tag: str, nb_packets: int = 3, max_retry: int = 60):
         """start ping measurement towards target from vps, return Atlas measurement id"""

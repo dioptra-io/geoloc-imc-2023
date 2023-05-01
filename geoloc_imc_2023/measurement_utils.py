@@ -2,23 +2,16 @@ import pickle
 import requests
 import json
 import logging
-import time
 
 from ipaddress import IPv4Network
 from random import randint
-from copy import copy
 
-from geoloc_imc_2023.atlas_probing import RIPEAtlas
-from geoloc_imc_2023.query_api import get_measurement_from_id
+from geoloc_imc_2023.helpers import polygon_centroid, haversine, circle_intersections
 from geoloc_imc_2023.default import (
     ANCHORS_FILE,
     PROBES_FILE,
     HITLIST_FILE,
     MEASUREMENT_CONFIG_PATH,
-    NB_PACKETS,
-    MAX_NUMBER_OF_VPS,
-    NB_TARGETS_PER_PREFIX,
-    NB_MAX_CONCURRENT_MEASUREMENTS,
 )
 
 logger = logging.getLogger()

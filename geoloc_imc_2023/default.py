@@ -16,13 +16,13 @@ ANCHORS_FILE: Path = DEFAULT_DIR / "../datasets/anchors.pickle"
 PROBES_FILE: Path = DEFAULT_DIR / "../datasets/probes.pickle"
 
 # cache files
-ANCHOR_TARGET_ANCHOR_VP: Path = DEFAULT_DIR / "../cache/anchor_target_anchor_vp.pickle"
-ANCHOR_TARGET_PROBE_VP: Path = DEFAULT_DIR / "../cache/anchor_target_probe_vp.pickle"
-ANCHOR_PREFIX_ANCHOR_VP: Path = DEFAULT_DIR / "../cache/anchor_prefix_anchor_vp.pickle"
-ANCHOR_PREFIX_PROBE_VP: Path = DEFAULT_DIR / "../cache/anchor_prefix_probe_vp.pickle"
+ANCHOR_TARGET_ANCHOR_VP: Path = DEFAULT_DIR / "../data/anchor_target_anchor_vp.pickle"
+ANCHOR_TARGET_PROBE_VP: Path = DEFAULT_DIR / "../data/anchor_target_probe_vp.pickle"
+ANCHOR_PREFIX_ANCHOR_VP: Path = DEFAULT_DIR / "../data/anchor_prefix_anchor_vp.pickle"
+ANCHOR_PREFIX_PROBE_VP: Path = DEFAULT_DIR / "../data/anchor_prefix_probe_vp.pickle"
 
 # constant
-MAX_NUMBER_OF_VPS = 1000
+MAX_NUMBER_OF_VPS = 1_000
 NB_MAX_CONCURRENT_MEASUREMENTS = 90
 NB_PACKETS = 3
 NB_TARGETS_PER_PREFIX = 3

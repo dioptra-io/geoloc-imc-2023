@@ -1,7 +1,7 @@
 # output path
-logs/*
-measurement_config/*
-result/*
+logs/*.*
+measurement_config/*.*
+result/*.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

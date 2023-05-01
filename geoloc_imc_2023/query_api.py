@@ -33,7 +33,7 @@ def parse_measurements_results(response: list) -> dict:
     """from get Atlas measurement request return parsed results"""
 
     # parse response
-    measurement_results = defaultdict(list)
+    measurement_results = defaultdict(dict)
     for result in response:
         # parse results and calculate geoloc
         if result.get("result") is not None:
@@ -51,15 +51,17 @@ def parse_measurements_results(response: list) -> dict:
                 continue
 
             # get min rtt
-            min_rtt = min(rtt_list)
+            try:
+                min_rtt = min(rtt_list)
+            except TypeError as e:
+                logger.error(f"error while getting min rtt: {rtt_list}. error:{e}")
+                continue
 
-            measurement_results[dst_addr].append(
-                {
-                    "node": vp_addr,
-                    "min_rtt": min_rtt,
-                    "rtt_list": rtt_list,
-                }
-            )
+            measurement_results[dst_addr][vp_addr] = {
+                "node": vp_addr,
+                "min_rtt": min_rtt,
+                "rtt_list": rtt_list,
+            }
 
         else:
             logger.warning(f"no results: {result}")

@@ -55,47 +55,52 @@ def check_circle_inclusion(c_1, c_2):
 
 def circle_preprocessing(circles, speed_threshold=None):
     circles_to_ignore = set()
-    circles_to_keep = set()
-    for c_1, c_2 in itertools.combinations(circles, 2):
+
+    circles_with_r_info = []
+    for c in circles:
+        lat, lon, rtt, d, r = c
+        if d is None:
+            d = rtt_to_km(rtt, speed_threshold)
+        if r is None:
+            r = d / 6371
+        circles_with_r_info.append((lat, lon, rtt, d, r))
+
+    for i in range(len(circles_with_r_info)):
+        c_1 = circles_with_r_info[i]
+        if c_1 in circles_to_ignore:
+            continue
         lat_1, lon_1, rtt_1, d_1, r_1 = c_1
-        if d_1 is None:
-            d_1 = rtt_to_km(rtt_1, speed_threshold)
-        if r_1 is None:
-            r_1 = d_1 / 6371
+        for j in range(i + 1, len(circles_with_r_info)):
+            c_2 = circles_with_r_info[j]
+            if c_2 in circles_to_ignore:
+                continue
+            lat_2, lon_2, rtt_2, d_2, r_2 = c_2
+            remove, keep = check_circle_inclusion(
+                (lat_1, lon_1, rtt_1, d_1, r_1), (lat_2, lon_2, rtt_2, d_2, r_2)
+            )
+            if remove:
+                circles_to_ignore.add(remove)
 
-        lat_2, lon_2, rtt_2, d_2, r_2 = c_2
-        if d_2 is None:
-            d_2 = rtt_to_km(rtt_2, speed_threshold)
-        if r_2 is None:
-            r_2 = d_2 / 6371
+    circles_to_keep = set(circles_with_r_info) - circles_to_ignore
 
-        remove, keep = check_circle_inclusion(
-            (lat_1, lon_1, rtt_1, d_1, r_1), (lat_2, lon_2, rtt_2, d_2, r_2)
-        )
+    return circles_to_keep
 
-        if remove:
-            circles_to_ignore.add(remove)
-            circles_to_keep.add(keep)
-        else:
-            circles_to_keep.add((lat_1, lon_1, rtt_1, d_1, r_1))
-            circles_to_keep.add((lat_2, lon_2, rtt_2, d_2, r_2))
-
-    return circles_to_keep - circles_to_ignore
 
 def get_points_on_circle(lat_c, lon_c, r_c, nb_points: int = 4):
     """from a circle, return a set of points"""
     circle_points = []
     for k in range(nb_points):
         # compute
-        angle = pi*2*k/nb_points
-        dx = r_c*1000*cos(angle)
-        dy = r_c*1000*sin(angle)
-        lat = lat_c + (180/pi)*(dy/6378137)
-        lon = lon_c + (180/pi)*(dx/6378137)/cos(lat_c*pi/180)
+        angle = pi * 2 * k / nb_points
+        dx = r_c * 1000 * cos(angle)
+        dy = r_c * 1000 * sin(angle)
+        lat = lat_c + (180 / pi) * (dy / 6378137)
+        lon = lon_c + (180 / pi) * (dx / 6378137) / cos(lat_c * pi / 180)
 
         circle_points.append((lat, lon))
-    
+
     return circle_points
+
 
 def circle_intersections(circles, speed_threshold=None):
     """
@@ -109,14 +114,9 @@ def circle_intersections(circles, speed_threshold=None):
     if len(circles) <= 2:
         if len(circles) == 1:
             single_circle = list(circles)[0]
-            print(f"only one circle found with coordinates: {single_circle}")
             lat, lon, rtt, d, r = single_circle
             filtered_points = get_points_on_circle(lat, lon, d)
             return filtered_points
-        else:
-            print(f"2 circles, case is not handled yet")
-            # TODO: do something in case we have two circles
-            return []
 
     for c_1, c_2 in itertools.combinations(circles, 2):
         lat_1, lon_1, rtt_1, d_1, r_1 = c_1
@@ -134,7 +134,7 @@ def circle_intersections(circles, speed_threshold=None):
 
         n = np.cross(x1, x2)
         if (1 - np.dot(x0, x0)) / np.dot(n, n) <= 0:
-            print("ANYCAST???", (lat_1, lon_1, rtt_1, d_1), (lat_2, lon_2, rtt_2, d_2))
+            # print("ANYCAST???", (lat_1, lon_1, rtt_1, d_1), (lat_2, lon_2, rtt_2, d_2))
             continue
 
         t = np.sqrt((1 - np.dot(x0, x0)) / np.dot(n, n))
@@ -211,3 +211,84 @@ def distance(lat1, lat2, lon1, lon2):
     r = 6371
 
     return c * r
+
+
+def get_middle_intersection(intersections):
+    """in case of only two intersection points, return the middle segment"""
+    (lat1, lon1) = intersections[0]
+    (lat2, lon2) = intersections[1]
+
+    # convert to radians
+    lon1 = radians(lon1)
+    lon2 = radians(lon2)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+
+    # calculate the middle of two points
+    Bx = np.cos(lat2) * np.cos(lon2 - lon1)
+    By = np.cos(lat2) * np.sin(lon2 - lon1)
+    latMid = np.arctan2(
+        np.sin(lat1) + np.sin(lat2),
+        np.sqrt((np.cos(lat1) + Bx) * (np.cos(lat1) + Bx) + By * By),
+    )
+    lonMid = lon1 + np.arctan2(By, np.cos(lat1) + Bx)
+
+    # convert back to degrees
+    latMid = latMid * (180 / pi)
+    lonMid = lonMid * (180 / pi)
+
+    return latMid, lonMid
+
+
+def get_closest_vp(measurement_set: dict) -> tuple:
+    """return the position of the vantage point with shortest ping measurement"""
+    shortest_ping = float("inf")
+    closest_vp = None
+    for vp, result in measurement_set.items():
+        if shortest_ping > result["min_rtt"]:
+            shortest_ping = result["min_rtt"]
+            closest_vp = vp
+
+    return closest_vp
+
+
+def select_best_guess_centroid(measurement_results: dict, vp_dataset: dict) -> tuple:
+    """
+    Find the best guess
+    that is the location of the vantage point closest to the centroid.
+    """
+    probe_circles = {}
+    for vp_addr, result in measurement_results.items():
+        try:
+            lat = vp_dataset[vp_addr]["latitude"]
+            lon = vp_dataset[vp_addr]["longitude"]
+            min_rtt = result["min_rtt"]
+        except KeyError:
+            continue
+
+        if isinstance(min_rtt, float):
+            probe_circles[vp_addr] = (
+                lat,
+                lon,
+                min_rtt,
+                None,
+                None,
+            )
+
+    circles = list(probe_circles.values())
+    intersections = circle_intersections(circles, speed_threshold=2 / 3)
+
+    centroid = None
+    if len(intersections) > 2:
+        centroid = polygon_centroid(intersections)
+    elif len(intersections) == 2:
+        # only two circles intersection, centroid is middle of the segment
+        centroid = get_middle_intersection(intersections)
+    else:
+        closest_vp = get_closest_vp(measurement_results)
+        centroid = (
+            vp_dataset[closest_vp]["latitude"],
+            vp_dataset[closest_vp]["longitude"],
+        )
+
+    return intersections, centroid
