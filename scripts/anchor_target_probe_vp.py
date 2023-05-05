@@ -3,9 +3,10 @@ import logging
 import sys
 import uuid
 import argparse
+import pickle
 
 from geoloc_imc_2023.cbg import CBG
-from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS
+from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS, ANCHOR_TARGET_PROBE_VP
 from geoloc_imc_2023.measurement_utils import (
     load_atlas_anchors,
     load_atlas_probes,
@@ -80,6 +81,16 @@ if __name__ == "__main__":
     save_config_file(measurement_config)
 
     cbg = CBG(RIPE_CREDENTIALS)
+
+    try:
+        with open(ANCHOR_TARGET_PROBE_VP, "rb") as f:
+            cached_results = pickle.load(f)
+
+        targets = list(set(targets).difference(set(cached_results)))
+
+    except FileNotFoundError:
+        logger.info("no cached results available")
+        pass
 
     logger.info(
         f"Starting measurements {measurement_uuid} with parameters: {dry_run}; nb_targets={len(targets)}; nb_vps={len(vps)}"

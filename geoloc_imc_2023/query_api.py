@@ -4,7 +4,7 @@ import time
 import json
 import logging
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from geoloc_imc_2023.default import RIPE_CREDENTIALS
 
@@ -50,11 +50,13 @@ def parse_measurements_results(response: list) -> dict:
             if not rtt_list:
                 continue
 
-            # get min rtt
+            # sometimes connection error with vantage point cause result to be string message
             try:
                 min_rtt = min(rtt_list)
-            except TypeError as e:
-                logger.error(f"error while getting min rtt: {rtt_list}. error:{e}")
+            except TypeError:
+                continue
+
+            if isinstance(min_rtt, str):
                 continue
 
             measurement_results[dst_addr][vp_addr] = {
@@ -65,6 +67,16 @@ def parse_measurements_results(response: list) -> dict:
 
         else:
             logger.warning(f"no results: {result}")
+
+    measurement_results[dst_addr] = OrderedDict(
+        {
+            vp: results
+            for vp, results in sorted(
+                measurement_results[dst_addr].items(),
+                key=lambda item: item[1]["min_rtt"],
+            )
+        }
+    )
 
     return measurement_results
 
