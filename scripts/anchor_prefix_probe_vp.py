@@ -2,10 +2,11 @@
 import logging
 import sys
 import uuid
+import pickle
 import argparse
 
 from geoloc_imc_2023.cbg import CBG, get_prefix_from_ip
-from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS
+from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS, ANCHOR_PREFIX_PROBE_VP
 from geoloc_imc_2023.measurement_utils import (
     load_atlas_anchors,
     load_atlas_probes,
@@ -92,6 +93,23 @@ if __name__ == "__main__":
     for target_addr in targets:
         target_prefix = get_prefix_from_ip(target_addr)
         target_prefixes.append(target_prefix)
+
+    try:
+        with open(ANCHOR_PREFIX_PROBE_VP, "rb") as f:
+            cached_results = pickle.load(f)
+
+        logger.info(
+            f"initial length targets: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+        )
+
+        target_prefixes = list(set(target_prefixes).difference(set(cached_results)))
+
+        logger.info(
+            f"after removing cached: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+        )
+    except FileNotFoundError:
+        logger.info("no cached results available")
+        pass
 
     # measurement for 3 targets in every target prefixes
     (

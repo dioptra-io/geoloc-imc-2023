@@ -6,8 +6,6 @@ import logging
 
 from collections import defaultdict, OrderedDict
 
-from geoloc_imc_2023.default import RIPE_CREDENTIALS
-
 logger = logging.getLogger()
 
 
@@ -17,11 +15,11 @@ def get_measurement_url(measurement_id: int):
     return f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/"
 
 
-def get_from_atlas(url: str, max_retry: int = 60, wait_time: int = 5):
+def get_from_atlas(url: str, max_retry: int = 60, wait_time: int = 2):
     """request to Atlas API"""
 
     for _ in range(max_retry):
-        response = requests.get(url, timeout=20).json()
+        response = requests.get(url).json()
         if response:
             break
         time.sleep(wait_time)
@@ -30,6 +28,58 @@ def get_from_atlas(url: str, max_retry: int = 60, wait_time: int = 5):
 
 
 def parse_measurements_results(response: list) -> dict:
+    """from get Atlas measurement request return parsed results"""
+
+    # parse response
+    measurement_results = defaultdict(dict)
+    for result in response:
+        # parse results and calculate geoloc
+        if result.get("result") is not None:
+            dst_addr = result["dst_addr"]
+            vp_addr = result["from"]
+
+            if type(result["result"]) == list:
+                rtt_list = [list(rtt.values())[0] for rtt in result["result"]]
+            else:
+                rtt_list = [result["result"]["rtt"]]
+
+            # remove stars from results
+            rtt_list = list(filter(lambda x: x != "*", rtt_list))
+            if not rtt_list:
+                continue
+
+            # sometimes connection error with vantage point cause result to be string message
+            try:
+                min_rtt = min(rtt_list)
+            except TypeError:
+                continue
+
+            if isinstance(min_rtt, str):
+                continue
+
+            measurement_results[dst_addr][vp_addr] = {
+                "node": vp_addr,
+                "min_rtt": min_rtt,
+                "rtt_list": rtt_list,
+            }
+
+        else:
+            logger.warning(f"no results: {result}")
+
+    measurement_results[dst_addr] = OrderedDict(
+        {
+            vp: results
+            for vp, results in sorted(
+                measurement_results[dst_addr].items(),
+                key=lambda item: item[1]["min_rtt"],
+            )
+        }
+    )
+
+    return measurement_results
+
+
+def parse_measurements_test(response: list) -> dict:
     """from get Atlas measurement request return parsed results"""
 
     # parse response
@@ -113,6 +163,6 @@ def get_measurements_from_tag(tag: str) -> dict:
         response = response.replace("} {", "}, {")
         response = json.loads(response)
 
-    measurement_results = parse_measurements_results(response)
+    measurement_results = parse_measurements_test(response)
 
     return measurement_results

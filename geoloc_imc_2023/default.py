@@ -23,6 +23,8 @@ ANCHOR_TARGET_ANCHOR_VP: Path = DATA_PATH / "anchor_target_anchor_vp.pickle"
 ANCHOR_TARGET_PROBE_VP: Path = DATA_PATH / "anchor_target_probe_vp.pickle"
 ANCHOR_PREFIX_ANCHOR_VP: Path = DATA_PATH / "anchor_prefix_anchor_vp.pickle"
 ANCHOR_PREFIX_PROBE_VP: Path = DATA_PATH / "anchor_prefix_probe_vp.pickle"
+ANCHOR_TARGET_ALL_VP: Path = DATA_PATH / "anchor_target_all_vp.pickle"
+
 
 # constant
 MAX_NUMBER_OF_VPS = 1_000
