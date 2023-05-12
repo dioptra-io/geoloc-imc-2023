@@ -102,6 +102,10 @@ if __name__ == "__main__":
             f"initial length targets: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
         )
 
+        # get prefixes out of targets
+        cached_results = [
+            get_prefix_from_ip(target_addr) for target_addr in cached_results
+        ]
         target_prefixes = list(set(target_prefixes).difference(set(cached_results)))
 
         logger.info(
