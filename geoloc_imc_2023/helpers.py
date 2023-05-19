@@ -142,13 +142,14 @@ def circle_intersections(circles, speed_threshold=None):
         i1 = x0 + t * n
         i2 = x0 - t * n
 
-        i_lon_1 = np.arctan(i1[1] / i1[0]) / (np.pi / 180)
+
+        i_lon_1 = np.arctan2(i1[1], i1[0]) * (180 / np.pi)
         i_lat_1 = np.arctan(i1[2] / np.sqrt((i1[0] ** 2) + (i1[1] ** 2))) / (
             np.pi / 180
         )
         intersect_points.append((i_lat_1, i_lon_1))
 
-        i_lon_2 = np.arctan(i2[1] / i2[0]) / (np.pi / 180)
+        i_lon_2 = np.arctan2(i2[1], i2[0]) * (180 / np.pi)
         i_lat_2 = np.arctan(i2[2] / np.sqrt((i2[0] ** 2) + (i2[1] ** 2))) / (
             np.pi / 180
         )

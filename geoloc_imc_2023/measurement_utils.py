@@ -2,6 +2,7 @@ import pickle
 import requests
 import json
 import logging
+from pathlib import Path
 
 from ipaddress import IPv4Network
 from random import randint
@@ -10,11 +11,24 @@ from geoloc_imc_2023.helpers import polygon_centroid, haversine, circle_intersec
 from geoloc_imc_2023.default import (
     ANCHORS_FILE,
     PROBES_FILE,
+    ALL_ATLAS_PROBES_FILE,
     HITLIST_FILE,
     MEASUREMENT_CONFIG_PATH,
 )
 
 logger = logging.getLogger()
+
+
+def save_data(out_file: Path, measurements: dict) -> None:
+    """save measurements data into pickle local file"""
+    with open(out_file, "wb") as f:
+        pickle.dump(measurements, f)
+
+
+def load_measurement_results(in_file: Path) -> dict:
+    """load local pickle data"""
+    with open(in_file, "rb") as f:
+        return pickle.load(f)
 
 
 def get_from_atlas(url):
@@ -119,17 +133,19 @@ def get_atlas_anchors() -> dict:
 def load_atlas_probes() -> dict:
     """return cached probes"""
     with open(PROBES_FILE, "rb") as f:
-        probes = pickle.load(f)
-
-    return probes
+        return pickle.load(f)
 
 
 def load_atlas_anchors() -> dict:
     """return cached anchors"""
     with open(ANCHORS_FILE, "rb") as f:
-        anchors = pickle.load(f)
+        return pickle.load(f)
 
-    return anchors
+
+def load_all_atlas_probes() -> dict:
+    """return cached anchors"""
+    with open(ALL_ATLAS_PROBES_FILE, "rb") as f:
+        return pickle.load(f)
 
 
 def load_prefix_hitlist() -> dict:

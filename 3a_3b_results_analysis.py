@@ -6,13 +6,13 @@ import numpy as np
 
 from pathlib import Path
 
-from geoloc_imc_2023.default import ANCHOR_TARGET_ALL_VP
 from geoloc_imc_2023.measurement_utils import (
     load_atlas_anchors,
     load_all_atlas_probes,
     save_data,
 )
 from geoloc_imc_2023.helpers import select_best_guess_centroid, haversine
+from geoloc_imc_2023.query_api import get_measurements_from_tag
 
 from geoloc_imc_2023.default import (
     ANCHOR_TARGET_ALL_VP,
@@ -20,7 +20,7 @@ from geoloc_imc_2023.default import (
 )
 
 NB_TRIAL = 100
-STEP = 100
+STEP = 1000
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -128,7 +128,7 @@ def load_cache_results(result_file: Path, smallest_subset: int = 10) -> dict:
     return result_analysis, last_subset
 
 
-def analyze_results(out_file: Path) -> None:
+def analyze_results(out_file: Path, measurement_results, vp_dataset, target_dataset) -> None:
     """analyze measurement results"""
 
     result_analysis, last_subset = load_cache_results(out_file)
@@ -139,6 +139,7 @@ def analyze_results(out_file: Path) -> None:
     print("last subset analyzed:", last_subset)
 
     for vp_set_size in range(last_subset, len(vp_dataset), STEP):
+
         subset_median_cbg = []
         subset_median_shortest_ping = []
 
@@ -152,7 +153,7 @@ def analyze_results(out_file: Path) -> None:
 
         print("vp subset size:", vp_set_size)
 
-        for index_trial in range(last_subset, NB_TRIAL):
+        for index_trial in range(0, NB_TRIAL):
 
             # get vp set
             pool = tuple(vp_dataset)
@@ -231,4 +232,15 @@ if __name__ == "__main__":
             except KeyError:
                 vp_unknown.add(vp)
 
-    analyze_results(ANCHOR_TARGET_PROBE_VP_RESULT_FILE)
+    print("nb targets:", len(target_dataset))
+    print("nb vps:", len(vp_dataset))
+
+    print("target unknown:", len(target_unknown))
+    print("vp unknown:", len(vp_unknown))
+
+    analyze_results(
+        out_file= ANCHOR_TARGET_PROBE_VP_RESULT_FILE, 
+        vp_dataset=vp_dataset,
+        target_dataset=target_dataset,
+        measurement_results=measurement_results
+    )

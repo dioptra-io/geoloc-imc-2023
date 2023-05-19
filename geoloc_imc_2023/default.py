@@ -17,6 +17,8 @@ MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / "../measurement_config/"
 HITLIST_FILE: Path = DEFAULT_DIR / "../datasets/parsed_hitlist.pickle"
 ANCHORS_FILE: Path = DEFAULT_DIR / "../datasets/anchors.pickle"
 PROBES_FILE: Path = DEFAULT_DIR / "../datasets/probes.pickle"
+ALL_ATLAS_PROBES_FILE: Path = DEFAULT_DIR / "../datasets/all_atlas_probes.pickle"
+REMOVED_PROBES: Path = DEFAULT_DIR / "../datasets/removed_probes.json"
 
 # dataset files
 ANCHOR_TARGET_ANCHOR_VP: Path = DATA_PATH / "anchor_target_anchor_vp.pickle"
@@ -25,6 +27,19 @@ ANCHOR_PREFIX_ANCHOR_VP: Path = DATA_PATH / "anchor_prefix_anchor_vp.pickle"
 ANCHOR_PREFIX_PROBE_VP: Path = DATA_PATH / "anchor_prefix_probe_vp.pickle"
 ANCHOR_TARGET_ALL_VP: Path = DATA_PATH / "anchor_target_all_vp.pickle"
 
+# results files
+ANCHOR_TARGET_ANCHOR_VP_RESULT_FILE = (
+    DATA_PATH / "anchor_target_anchor_vp_result_file.pickle"
+)
+ANCHOR_TARGET_PROBE_VP_RESULT_FILE = (
+    DATA_PATH / "anchor_target_probe_vp_result_file.pickle"
+)
+
+# clickhouse
+DB_HOST = "localhost"
+GEO_REPLICATION_DB = "geolocation_replication"
+ANCHORS_MESHED_PING_TABLE = f"anchors_meshed_pings"
+PROBES_TO_ANCHORS_PING_TABLE = f"ping_10k_to_anchors"
 
 # constant
 MAX_NUMBER_OF_VPS = 1_000
