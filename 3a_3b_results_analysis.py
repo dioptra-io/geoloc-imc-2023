@@ -2,6 +2,7 @@ import random
 import pickle
 import argparse
 import logging
+import multiprocessing
 import numpy as np
 
 from pathlib import Path
@@ -15,16 +16,44 @@ from geoloc_imc_2023.helpers import select_best_guess_centroid, haversine
 from geoloc_imc_2023.query_api import get_measurements_from_tag
 
 from geoloc_imc_2023.default import (
+    DATA_PATH,
     ANCHOR_TARGET_ALL_VP,
+    ANCHOR_TARGET_ANCHOR_VP,
     ANCHOR_TARGET_PROBE_VP_RESULT_FILE,
 )
 
-NB_TRIAL = 100
-STEP = 1000
+NB_TRIAL = 1_00
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
+def load_all_data() -> tuple:
+    """return all necessary data"""    
+    # load results
+    with open(ANCHOR_TARGET_ALL_VP, "rb") as f:
+        measurement_results = pickle.load(f)
+
+    logger.info(f"Total number of targets measured: {len(measurement_results)}")
+
+    # load vps and targets dataset (here only anchors)
+    target_dataset = load_atlas_anchors()
+    vp_dataset = load_all_atlas_probes()
+    
+    return measurement_results, target_dataset, vp_dataset
+
+def load_anchor_data() -> tuple:
+    """return all necessary data"""    
+    # load results
+    with open(ANCHOR_TARGET_ANCHOR_VP, "rb") as f:
+        measurement_results = pickle.load(f)
+
+    logger.info(f"Total number of targets measured: {len(measurement_results)}")
+
+    # load vps and targets dataset (here only anchors)
+    target_dataset = load_atlas_anchors()
+    vp_dataset = load_atlas_anchors()
+    
+    return measurement_results, target_dataset, vp_dataset
 
 def load_measurement_results(in_file: Path) -> dict:
     """get measuerments from local pickle file"""
@@ -128,119 +157,104 @@ def load_cache_results(result_file: Path, smallest_subset: int = 10) -> dict:
     return result_analysis, last_subset
 
 
-def analyze_results(out_file: Path, measurement_results, vp_dataset, target_dataset) -> None:
+def get_vps_subset_results(vp_set_size: int):
     """analyze measurement results"""
 
-    result_analysis, last_subset = load_cache_results(out_file)
+    # constant
+    out_file = DATA_PATH / "anchor_target_anchor_vp_data.pickle"
 
-    cbg_results = result_analysis["cbg"]
-    shortest_ping_results = result_analysis["shortest_ping"]
+    measurement_results, target_dataset, vp_dataset = load_anchor_data()
+    
+    subset_results = {}
 
-    print("last subset analyzed:", last_subset)
+    subset_median_cbg = []
+    subset_median_shortest_ping = []
 
-    for vp_set_size in range(last_subset, len(vp_dataset), STEP):
+    all_dst_errors_cbg = []
+    all_dst_errors_shortest_ping = []
 
-        subset_median_cbg = []
-        subset_median_shortest_ping = []
+    logger.info(f"vp subset size: {vp_set_size}")
 
-        all_dst_errors_cbg = []
-        all_dst_errors_shortest_ping = []
+    for index_trial in range(0, NB_TRIAL):
 
-        # remove initial step so data are aligned with step
-        if last_subset == 10:
-            if vp_set_size != 10:
-                vp_set_size -= 10
+        # get vp set
+        pool = tuple(vp_dataset)
+        n = len(pool)
+        indices = sorted(random.sample(range(n), vp_set_size))
+        vp_subset = tuple(pool[i] for i in indices)
 
-        print("vp subset size:", vp_set_size)
+        cbg_dst_errors_list, shortest_ping_dst_errors_list = get_dst_error(
+            vp_subset=vp_subset,
+            measurement_results=measurement_results,
+            target_dataset=target_dataset,
+            vp_dataset=vp_dataset,
+        )
 
-        for index_trial in range(0, NB_TRIAL):
+        subset_median_cbg.append(np.median(cbg_dst_errors_list))
+        subset_median_shortest_ping.append(np.median(shortest_ping_dst_errors_list))
 
-            # get vp set
-            pool = tuple(vp_dataset)
-            n = len(pool)
-            indices = sorted(random.sample(range(n), vp_set_size))
-            vp_subset = tuple(pool[i] for i in indices)
+        all_dst_errors_cbg.extend(cbg_dst_errors_list)
+        all_dst_errors_shortest_ping.extend(shortest_ping_dst_errors_list)
 
-            # TODO: check validity of vp set (geolocation, diversity)
-            cbg_dst_errors_list, shortest_ping_dst_errors_list = get_dst_error(
-                vp_subset=vp_subset,
-                measurement_results=measurement_results,
-                target_dataset=target_dataset,
-                vp_dataset=vp_dataset,
-            )
+        index_trial += 1
 
-            subset_median_cbg.append(np.median(cbg_dst_errors_list))
-            subset_median_shortest_ping.append(np.median(shortest_ping_dst_errors_list))
+    median_error_cbg = np.median(subset_median_cbg)
+    median_error_shortest_ping = np.median(subset_median_shortest_ping)
 
-            all_dst_errors_cbg.extend(cbg_dst_errors_list)
-            all_dst_errors_shortest_ping.extend(shortest_ping_dst_errors_list)
+    # get the standard deviation over all trials
+    deviation_cbg = np.std(subset_median_cbg)
+    deviation_shortest_ping = np.std(subset_median_shortest_ping)
 
-            index_trial += 1
+    logger.info(f"subset size: {vp_set_size} done.")
+    logger.info(f"median cbg = {median_error_cbg} | std cbg = {deviation_cbg}")
+    logger.info(
+        f"median shortest_ping = {median_error_shortest_ping} | std shortest_ping = {deviation_shortest_ping}"
+    )
 
-        median_error_cbg = np.median(subset_median_cbg)
-        median_error_shortest_ping = np.median(subset_median_shortest_ping)
-
-        # get the standard deviation over all trials
-        deviation_cbg = np.std(subset_median_cbg)
-        deviation_shortest_ping = np.std(subset_median_shortest_ping)
-
-        cbg_results[vp_set_size] = {
+    subset_results = {
+        "subset_size": vp_set_size,
+        "cbg": {
             "median_error": median_error_cbg,
             "deviation": deviation_cbg,
             "data": all_dst_errors_cbg,
-        }
-        shortest_ping_results[vp_set_size] = {
+        },
+        "shortest_ping": {
             "median_error": median_error_shortest_ping,
             "deviation": deviation_shortest_ping,
             "data": all_dst_errors_shortest_ping,
         }
+    }
 
-        result_analysis["cbg"].update(cbg_results)
-        result_analysis["shortest_ping"].update(cbg_results)
+    save_data(out_file, subset_results)
 
-        save_data(out_file, result_analysis)
-
-        print(f"subset size: {vp_set_size} done.")
-        print(f"median cbg = {median_error_cbg} | std cbg = {deviation_cbg}")
-        print(
-            f"median shortest_ping = {median_error_shortest_ping} | std shortest_ping = {deviation_shortest_ping}"
-        )
-
+    logger.info("results saved")
 
 if __name__ == "__main__":
 
-    # load results
-    with open(ANCHOR_TARGET_ALL_VP, "rb") as f:
-        measurement_results = pickle.load(f)
+    # constant
+    out_file = DATA_PATH / "anchor_target_anchor_vp_data.pickle"
+        
+    # get cached results
+    cached_results = None
+    try:
+        with open(out_file, "rb") as f:
+            cached_results = pickle.load(f)
+    except FileNotFoundError:
+        pass
+    
+    # set subset
+    subsets = [i for i in range(5,750, 5)]
 
-    print("Total number of targets measured:", len(measurement_results))
+    if cached_results:
+        last_subset = max([result['subset_size'] for result in cached_results])
+        subsets = subsets[subsets.index(last_subset):]
 
-    # load vps and targets dataset (here only anchors)
-    target_dataset = load_atlas_anchors()
-    vp_dataset = load_all_atlas_probes()
+        print("using cached results:", last_subset)
 
-    target_unknown = set()
-    vp_unknown = set()
-    for target in measurement_results:
-        try:
-            target_dataset[target]
-        except KeyError:
-            target_unknown.add(target)
-        for vp in measurement_results[target]:
-            try:
-                vp_dataset[vp]
-            except KeyError:
-                vp_unknown.add(vp)
+    print(subsets)
 
-    print("nb targets:", len(target_dataset))
-    print("nb vps:", len(vp_dataset))
+    nb_cpu = multiprocessing.cpu_count()
 
-    print("target unknown:", len(target_unknown))
-    print("vp unknown:", len(vp_unknown))
-
-    analyze_results(
-        out_file= ANCHOR_TARGET_PROBE_VP_RESULT_FILE, 
-        vp_dataset=vp_dataset,
-        target_dataset=target_dataset,
-        measurement_results=measurement_results
-    )
+    with multiprocessing.Pool(5) as pool:
+        # create a set of word hashes
+        final_results = pool.map(get_vps_subset_results, subsets)

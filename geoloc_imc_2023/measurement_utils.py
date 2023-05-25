@@ -19,10 +19,20 @@ from geoloc_imc_2023.default import (
 logger = logging.getLogger()
 
 
-def save_data(out_file: Path, measurements: dict) -> None:
+def save_data(out_file: Path, subset_results: dict) -> None:
     """save measurements data into pickle local file"""
+    cached_results = []
+
+    # get cached results
+    try:
+        with open(out_file, "rb") as f:
+            cached_results = pickle.load(f)
+            cached_results.append(subset_results)
+    except FileNotFoundError:
+        cached_results = [subset_results]
+        
     with open(out_file, "wb") as f:
-        pickle.dump(measurements, f)
+        pickle.dump(cached_results, f)
 
 
 def load_measurement_results(in_file: Path) -> dict:
@@ -92,6 +102,27 @@ def get_atlas_probes() -> dict:
 
     return probes, rejected, geoloc_disputed
 
+def get_all_atlas_probes() -> dict:
+    """return all atlas probes wether or not they are connected"""
+    probes = {}
+    for _, probe in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
+        
+        # filter probes based on generic criteria
+        if probe.get("geometry") is None:
+            continue
+
+        probes[probe["address_v4"]] = {
+            "is_anchor": probe["is_anchor"],
+            "country_code": probe["country_code"],
+            "latitude": probe["geometry"]["coordinates"][1],
+            "longitude": probe["geometry"]["coordinates"][0],
+        }
+
+    # cache probes
+    with open(ALL_ATLAS_PROBES_FILE, "wb") as f:
+        pickle.dump(probes, f)
+
+    return probes
 
 def get_atlas_anchors() -> dict:
     """return all atlas anchors"""
