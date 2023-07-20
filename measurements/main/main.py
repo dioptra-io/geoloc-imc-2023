@@ -4,13 +4,12 @@ import uuid
 import argparse
 import pickle
 
-from geoloc_imc_2023.cbg import PING, get_prefix_from_ip
-from geoloc_imc_2023.default import LOG_PATH, RIPE_CREDENTIALS, ANCHOR_PREFIX_ANCHOR_VP, ANCHOR_PREFIX_PROBE_VP, ANCHOR_TARGET_PROBE_VP
-from geoloc_imc_2023.measurement_utils import (
-    load_atlas_anchors,
-    load_atlas_probes,
-    load_prefix_hitlist,
+from measurements.src.ping import PING
+from default import LOG_PATH, RIPE_CREDENTIALS, ANCHORS_FILE, PROBES_FILE, HITLIST_FILE, PREFIX_ANCHOR_VP, PREFIX_PROBE_VP, TARGET_ANCHOR_VP, TARGET_PROBE_VP
+from utils.measurement_utils import (
+    load_pickle,
     save_config_file,
+    get_prefix_from_ip,
 )
 
 
@@ -34,7 +33,7 @@ if __name__ == "__main__":
         "--nb_vps", help="define the number of atlas vantage points to use", type=int
     )
     parser.add_argument(
-        "--target_type", help="string defining the type of target: either 'anchor' or 'probe'", type=str
+        "--vp_type", help="string defining the type of vantage point: either 'anchor' or 'probe'", type=str
     )
     parser.add_argument(
         "--probing_method", help="string defining the method for probing: either by 'prefix' or 'target'", type=str
@@ -53,7 +52,7 @@ if __name__ == "__main__":
 
     nb_targets = args.nb_targets
     nb_vps = args.nb_vps
-    target_type = args.target_type
+    vp_type = args.vp_type
     probing_method = args.probing_method
 
     # generate measurement UUID
@@ -73,12 +72,12 @@ if __name__ == "__main__":
     logger = logging.getLogger()
 
     # load measurement datasets
-    targets_per_prefix = load_prefix_hitlist()
-    anchors = load_atlas_anchors()
-    probes = load_atlas_probes()
+    targets_per_prefix = load_pickle(HITLIST_FILE)
+    anchors = load_pickle(ANCHORS_FILE)
+    probes = load_pickle(PROBES_FILE)
 
     # select targets and vps from anchors
-    if target_type == "anchor":
+    if vp_type == "anchor":
         targets = list(anchors.keys())[:nb_targets]
         vps = {}
         for i, anchor in enumerate(anchors):
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                 break
             vps[anchor] = anchors[anchor]
 
-    elif target_type == "probe":
+    elif vp_type == "probe":
         targets = list(anchors.keys())[:nb_targets]
         vps = {}
         for i, probe in enumerate(probes):
@@ -101,7 +100,7 @@ if __name__ == "__main__":
     measurement_config = {
         "UUID": str(measurement_uuid),
         "is_dry_run": dry_run,
-        "description": f"measurement towards anchors with {target_type} as vps",
+        "description": f"measurement towards anchors with {vp_type} as vps",
         "type": probing_method,
         "af": 4,
         "targets": targets,
@@ -111,7 +110,7 @@ if __name__ == "__main__":
     # save measurement configuration before starting measurement
     save_config_file(measurement_config)
 
-    cbg = PINGRIPE_CREDENTIALS)
+    pinger = PING(RIPE_CREDENTIALS)
 
     logger.info(
         f"Starting measurements {measurement_uuid} with parameters: {dry_run}; nb_targets={len(targets)}; nb_vps={len(vps)}"
@@ -123,42 +122,46 @@ if __name__ == "__main__":
         target_prefix = get_prefix_from_ip(target_addr)
         target_prefixes.append(target_prefix)
 
-    if target_type == "anchor":
-        right_file = ANCHOR_PREFIX_ANCHOR_VP
-    elif target_type == "probe":
-        right_file = ANCHOR_PREFIX_PROBE_VP
+    if vp_type == "anchor" and probing_method == "prefix":
+        right_file = PREFIX_ANCHOR_VP
+    elif vp_type == "probe" and probing_method == "prefix":
+        right_file = PREFIX_PROBE_VP
+    elif vp_type == "anchor" and probing_method == "target":
+        right_file = TARGET_ANCHOR_VP
+    elif vp_type == "probe" and probing_method == "target":
+        right_file = TARGET_PROBE_VP
     else:
-        logger.warning("Entry type not supported for --target_type")
-
-    try:
-        with open(right_file, "rb") as f:
-            cached_results = pickle.load(f)
-
-        logger.info(f"{len(set(target_prefixes))}")
-        logger.info(
-            f"initial length targets: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
-        )
-
-        # get prefixes out of targets
-        cached_results = [
-            get_prefix_from_ip(target_addr) for target_addr in cached_results
-        ]
-        target_prefixes = list(
-            set(target_prefixes).difference(set(cached_results)))
-
-        logger.info(
-            f"after removing cached: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
-        )
-    except FileNotFoundError:
-        logger.info("No cached results available")
-        pass
+        logger.warning(
+            "Entry type not supported for --vp_type or --probing_method")
 
     if probing_method == "prefix":
+        try:
+            with open(right_file, "rb") as f:
+                cached_results = pickle.load(f)
+
+            logger.info(f"{len(set(target_prefixes))}")
+            logger.info(
+                f"initial length targets: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+            )
+
+            # get prefixes out of targets
+            cached_results = [
+                get_prefix_from_ip(target_addr) for target_addr in cached_results
+            ]
+            target_prefixes = list(
+                set(target_prefixes).difference(set(cached_results)))
+
+            logger.info(
+                f"after removing cached: {len(target_prefixes)}, cached measurements : {len(cached_results)}"
+            )
+        except FileNotFoundError:
+            logger.info("No cached results available")
+            pass
         (
             measurement_config["ids"],
             measurement_config["start_time"],
             measurement_config["end_time"],
-        ) = cbg.ping_by_prefix(
+        ) = pinger.ping_by_prefix(
             target_prefixes=target_prefixes,
             vps=vps,
             targets_per_prefix=targets_per_prefix,
@@ -166,11 +169,20 @@ if __name__ == "__main__":
             dry_run=dry_run,
         )
     elif probing_method == "target":
+        try:
+            with open(TARGET_PROBE_VP, "rb") as f:
+                cached_results = pickle.load(f)
+
+            targets = list(set(targets).difference(set(cached_results)))
+
+        except FileNotFoundError:
+            logger.info("no cached results available")
+            pass
         (
             measurement_config["ids"],
             measurement_config["start_time"],
             measurement_config["end_time"],
-        ) = cbg.ping_by_target(
+        ) = pinger.ping_by_target(
             targets=targets,
             vps=vps,
             tag=measurement_uuid,

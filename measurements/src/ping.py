@@ -5,7 +5,7 @@ from copy import copy
 from random import randint
 from ipaddress import IPv4Network
 
-from atlas_api import RIPEAtlas
+from measurements.src.atlas_api import RIPEAtlas
 from default import (
     NB_PACKETS,
     NB_TARGETS_PER_PREFIX,
@@ -16,15 +16,6 @@ from default import (
 logger = logging.getLogger()
 
 
-def get_prefix_from_ip(addr: str):
-    """from an ip addr return /24 prefix"""
-    prefix = addr.split(".")[:-1]
-    prefix.append("0")
-    prefix = ".".join(prefix)
-
-    return prefix
-
-
 class PING:
     def __init__(
         self,
@@ -32,7 +23,6 @@ class PING:
     ) -> None:
         self.account = ripe_credentials["username"]
         self.key = ripe_credentials["key"]
-
         self.driver = RIPEAtlas(self.account, self.key)
 
     def get_target_hitlist(
@@ -70,7 +60,7 @@ class PING:
         nb_packets: int = NB_PACKETS,
         nb_targets: int = NB_TARGETS_PER_PREFIX,
         dry_run: bool = False,
-    ) -> dict:
+    ):
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
         active_measurements = []
@@ -138,7 +128,7 @@ class PING:
         tag: str,
         nb_packets: int = NB_PACKETS,
         dry_run: bool = False,
-    ) -> dict:
+    ):
         """from a list of prefixes, start measurements for n target addrs in prefix"""
 
         active_measurements = []

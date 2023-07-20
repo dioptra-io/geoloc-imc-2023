@@ -5,13 +5,13 @@ from pathlib import Path
 DEFAULT_DIR: Path = Path(__file__).resolve().parent
 
 # dir path
-LOG_PATH: Path = DEFAULT_DIR / "../log/"
+LOG_PATH: Path = DEFAULT_DIR / "log/"
 RESULT_PATH: Path = DEFAULT_DIR / "measurements/results/"
 ATLAS_PATH: Path = DEFAULT_DIR / \
     "measurements/anchors_probes_dataset/"
-FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/"
 MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / \
     "measurements/measurement_config/"
+FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/"
 
 # file path
 HITLIST_FILE: Path = ATLAS_PATH / "parsed_hitlist.pickle"
@@ -24,11 +24,11 @@ COUNTRIES_PICKLE_FILE: Path = ATLAS_PATH / "countries.pickle"
 COUNTRIES_TXT_FILE: Path = ATLAS_PATH / "countries.txt"
 
 # result files
-ANCHOR_TARGET_ANCHOR_VP: Path = RESULT_PATH / "anchor_target_anchor_vp.pickle"
-ANCHOR_TARGET_PROBE_VP: Path = RESULT_PATH / "anchor_target_probe_vp.pickle"
-ANCHOR_PREFIX_ANCHOR_VP: Path = RESULT_PATH / "anchor_prefix_anchor_vp.pickle"
-ANCHOR_PREFIX_PROBE_VP: Path = RESULT_PATH / "anchor_prefix_probe_vp.pickle"
-ANCHOR_TARGET_ALL_VP: Path = RESULT_PATH / "anchor_target_all_vp.pickle"
+TARGET_ANCHOR_VP: Path = RESULT_PATH / "target_anchor_vp.pickle"
+TARGET_PROBE_VP: Path = RESULT_PATH / "target_probe_vp.pickle"
+PREFIX_ANCHOR_VP: Path = RESULT_PATH / "prefix_anchor_vp.pickle"
+PREFIX_PROBE_VP: Path = RESULT_PATH / "prefix_probe_vp.pickle"
+TARGET_ALL_VP: Path = RESULT_PATH / "target_all_vp.pickle"
 
 # clickhouse
 DB_HOST = "localhost"

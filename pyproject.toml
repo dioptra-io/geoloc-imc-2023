@@ -1,9 +1,13 @@
 [tool.poetry]
-name = "reorganisation"
+name = "review"
 version = "0.1.0"
 description = ""
 authors = ["Danaelmilo <milo2.dreyfus@gmail.com>"]
 readme = "README.md"
+packages = [
+    { include = "utils" },
+    { include = "measurements" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.11"
