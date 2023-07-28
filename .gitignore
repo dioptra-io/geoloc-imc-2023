@@ -132,3 +132,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Omar
+*.json
+*.out
+tmp.prof
+*.dat
+fig/*
+*.pyc
+__pycache__/*

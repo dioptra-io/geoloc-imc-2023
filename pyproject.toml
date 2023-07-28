@@ -6,7 +6,6 @@ authors = ["Danaelmilo <milo2.dreyfus@gmail.com>"]
 readme = "README.md"
 packages = [
     { include = "utils" },
-    { include = "measurements" },
 ]
 
 [tool.poetry.dependencies]
@@ -15,10 +14,14 @@ numpy = "^1.21.3"
 pandas = "^1.3.4"
 matplotlib = "^3.4.3"
 plotly = "^5.14.0"
-nbformat = "^4.4.0"
 seaborn = "^0.12.1"
 requests = "^2.28.1"
-aiohttp = "^3.8.4"
+clickhouse-driver = "^0.2.6"
+scipy = "^1.11.1"
+overpy = "^0.6"
+dnspython = "^2.4.1"
+geopy = "^2.3.0"
+ujson = "^5.8.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.24.0"
