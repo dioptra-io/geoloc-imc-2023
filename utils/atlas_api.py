@@ -4,7 +4,6 @@ import logging
 import time
 import requests
 
-from pathlib import Path
 from collections import defaultdict, OrderedDict
 
 logger = logging.getLogger()
@@ -53,7 +52,7 @@ class RIPEAtlas(object):
                 break
             except KeyError:
                 logger.info(response)
-                logger.info("Warning!", "Too much measurements.", "Waiting.")
+                logger.warning("Too much measurements.", "Waiting.")
                 time.sleep(60)
         else:
             raise Exception("Too much measurements. Stopping.")
@@ -165,10 +164,10 @@ def parse_measurements_results(response: list) -> dict:
     return measurement_results
 
 
-def get_measurements_from_id(
+def get_measurement_from_id(
     measurement_id: int,
     max_retry: int = 60,
-    wait_time: int = 2,
+    wait_time: int = 10,
 ) -> dict:
     """retrieve measurement results from RIPE Atlas with measurement id"""
 
@@ -186,7 +185,7 @@ def get_measurements_from_tag(tag: str) -> dict:
 
     url = f"https://atlas.ripe.net/api/v2/measurements/tags/{tag}/results/"
 
-    response = get_response(url)
+    response = get_response(url, max_retry=1, wait_time=1)
 
     measurement_results = parse_measurements_results(response)
 
@@ -216,9 +215,9 @@ def get_from_atlas(url: str):
             break
 
 
-def get_atlas_probes() -> dict:
+def get_atlas_probes() -> list:
     """return all connected atlas probes"""
-    probes = {}
+    probes = []
     rejected = 0
     geoloc_disputed = 0
     for _, probe in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
@@ -237,21 +236,24 @@ def get_atlas_probes() -> dict:
                 geoloc_disputed += 1
                 continue
 
-            probes[probe["address_v4"]] = {
-                "id": probe["id"],
-                "ip": probe["address_v4"],
-                "is_anchor": probe["is_anchor"],
+            reduced_probe = {
+                "address_v4": probe["address_v4"],
+                "address_v6": probe["address_v6"],
+                "asn_v4": probe["asn_v4"],
+                "asn_v6": probe["asn_v6"],
                 "country_code": probe["country_code"],
-                "latitude": probe["geometry"]["coordinates"][1],
-                "longitude": probe["geometry"]["coordinates"][0],
+                "description": probe["description"],
+                "first_connected": probe["first_connected"],
+                "geometry": probe["geometry"]
             }
+            probes.append(reduced_probe)
 
     return probes, rejected, geoloc_disputed
 
 
-def get_atlas_anchors() -> dict:
+def get_atlas_anchors() -> list:
     """return all atlas anchors"""
-    anchors = {}
+    anchors = []
     rejected = 0
     geoloc_disputed = 0
     for _, anchor in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
@@ -270,36 +272,16 @@ def get_atlas_anchors() -> dict:
                 geoloc_disputed += 1
                 continue
 
-            anchors[anchor["address_v4"]] = {
-                "id": anchor["id"],
-                "ip": anchor["address_v4"],
-                "is_anchor": anchor["is_anchor"],
+            reduced_anchor = {
+                "address_v4": anchor["address_v4"],
+                "address_v6": anchor["address_v6"],
+                "asn_v4": anchor["asn_v4"],
+                "asn_v6": anchor["asn_v6"],
                 "country_code": anchor["country_code"],
-                "latitude": anchor["geometry"]["coordinates"][1],
-                "longitude": anchor["geometry"]["coordinates"][0],
+                "description": anchor["description"],
+                "first_connected": anchor["first_connected"],
+                "geometry": anchor["geometry"]
             }
+            anchors.append(reduced_anchor)
 
     return anchors, rejected, geoloc_disputed
-
-
-def get_atlas_probes_and_anchors() -> dict:
-    """return all atlas probes wether or not they are connected"""
-    probes = {}
-    for _, probe in enumerate(get_from_atlas("https://atlas.ripe.net/api/v2/probes/")):
-
-        # filter probes based on generic criteria
-        if (
-            probe.get("geometry") is None
-            or probe.get("address_v4") is None
-            or probe.get("country_code") is None
-        ):
-            continue
-
-        probes[probe["address_v4"]] = {
-            "is_anchor": probe["is_anchor"],
-            "country_code": probe["country_code"],
-            "latitude": probe["geometry"]["coordinates"][1],
-            "longitude": probe["geometry"]["coordinates"][0],
-        }
-
-    return probes

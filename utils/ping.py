@@ -46,7 +46,7 @@ class PING:
             )
 
             vp_ids = [
-                vps[vp_addr]["id"] for vp_addr in vps if vp_addr not in target_addr_list
+                vps[vp_addr]["address_v4"] for vp_addr in vps if vp_addr not in target_addr_list
             ]
 
             logger.debug(
@@ -109,7 +109,7 @@ class PING:
         start_time = time.time()
         for _, target_addr in enumerate(targets):
             # get vps id for measurement, remove target if in vps
-            vp_ids = [vps[vp_addr]["id"]
+            vp_ids = [vps[vp_addr]["address_v4"]
                       for vp_addr in vps if vp_addr != target_addr]
 
             for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):

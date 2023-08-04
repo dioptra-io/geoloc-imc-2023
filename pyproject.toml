@@ -6,6 +6,7 @@ authors = ["Danaelmilo <milo2.dreyfus@gmail.com>"]
 readme = "README.md"
 packages = [
     { include = "utils" },
+    { include = "datasets" },
 ]
 
 [tool.poetry.dependencies]

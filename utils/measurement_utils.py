@@ -1,7 +1,5 @@
-import pickle
 import ujson as json
 
-from pathlib import Path
 from random import randint
 from ipaddress import IPv4Network
 
@@ -13,32 +11,7 @@ def load_json(file):
 
 def dump_json(o, file):
     with open(file, "w") as f:
-        json.dump(o, f)
-
-
-def load_pickle(file):
-    with open(file, "rb") as f:
-        return pickle.load(f)
-
-
-def dump_pickle(o, file):
-    with open(file, "wb") as f:
-        pickle.dump(o, f)
-
-
-def update_pickle(subset_results: dict, file: Path) -> None:
-    try:
-        cached_results = load_pickle(file)
-        cached_results.update(subset_results)
-    except FileNotFoundError:
-        cached_results = subset_results
-    dump_json(cached_results, file)
-
-
-def save_config_file(measurement_config: dict, file: Path) -> None:
-    """save measurement config file"""
-    with open(file, "w") as f:
-        json.dump(measurement_config, f, indent=4)
+        json.dump(o, f, indent=4)
 
 
 def get_prefix_from_ip(addr: str) -> str:
@@ -46,7 +19,6 @@ def get_prefix_from_ip(addr: str) -> str:
     prefix = addr.split(".")[:-1]
     prefix.append("0")
     prefix = ".".join(prefix)
-
     return prefix
 
 
