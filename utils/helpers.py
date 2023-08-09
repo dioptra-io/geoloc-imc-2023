@@ -292,3 +292,42 @@ def select_best_guess_centroid(measurement_results: dict, vp_dataset: dict) -> t
         )
 
     return intersections, centroid
+
+
+def get_center_of_poly(circles, speed):
+    points = circle_intersections(circles, speed)
+    if len(points) == 0:
+        return None, None
+    return polygon_centroid(points)
+
+
+def get_points_in_poly(circles, rot, rad, speed, old_circles=[]):
+    circles = circle_preprocessing(circles, speed_threshold=speed)
+    points = circle_intersections(circles, speed)
+    if len(points) == 0:
+        return []
+    else:
+        center = polygon_centroid(points)
+    res = [center]
+    iter_rad = 0
+    points_added = True
+    while points_added:
+        iter_rad += rad
+        points_added = False
+        to_add_points = get_points_on_circle(
+            center[0], center[1], iter_rad, int(360/rot))
+        for point in to_add_points:
+            all_in = True
+            for vp in circles:
+                if not is_within_cirle((vp[0], vp[1]), vp[2], point, speed):
+                    all_in = False
+                    break
+            if all_in:
+                for vp in old_circles:
+                    if not is_within_cirle((vp[0], vp[1]), vp[2], point, speed):
+                        all_in = False
+                    break
+                if all_in:
+                    points_added = True
+                    res.append(point)
+    return res

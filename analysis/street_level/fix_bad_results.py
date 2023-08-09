@@ -169,17 +169,7 @@ def remove_bad_cbg():
     #    json.dump(good_results, outfile)
 
 
-def get_ip_list(anchors_file):
-    with open(anchors_file, 'r') as json_file:
-        anchors = json.load(json_file)
 
-    ip_lst = []
-    for anchor in anchors:
-        ip_lst.append(anchor['address_v4'])
-    print(len(ip_lst))
-
-    with open("anchors_ip_lst.json", 'w') as outfile:
-        json.dump(ip_lst, outfile)
 
 
 if __name__ == '__main__':
@@ -187,4 +177,3 @@ if __name__ == '__main__':
     # remove_bad_results()
     # key_target_ip_spec()
     # remove_bad_cbg()
-    get_ip_list(GOOD_ANCHORS_FILE_PATH)

@@ -4,15 +4,9 @@ import time
 from copy import copy
 
 from utils.atlas_api import RIPEAtlas, wait_for
-from utils.measurement_utils import get_target_hitlist
-from default import (
-    NB_PACKETS,
-    NB_TARGETS_PER_PREFIX,
-    MAX_NUMBER_OF_VPS,
-    NB_MAX_CONCURRENT_MEASUREMENTS,
-)
-
-logger = logging.getLogger()
+from utils.geoloc_earth import get_target_hitlist
+from default import (NB_PACKETS, NB_TARGETS_PER_PREFIX,
+                     MAX_NUMBER_OF_VPS, NB_MAX_CONCURRENT_MEASUREMENTS)
 
 
 class PING:
@@ -49,7 +43,7 @@ class PING:
                 vps[vp_addr]["address_v4"] for vp_addr in vps if vp_addr not in target_addr_list
             ]
 
-            logger.debug(
+            logging.debug(
                 f"starting measurement for {target_prefix} with {[addr for addr in target_addr_list]}"
             )
 
@@ -57,7 +51,7 @@ class PING:
                 for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                     subset_vp_ids = vp_ids[i: i + MAX_NUMBER_OF_VPS]
 
-                    logger.debug(
+                    logging.debug(
                         f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                     )
 
@@ -74,7 +68,7 @@ class PING:
 
                     # check number of parallel measurements in not too high
                     if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
-                        logger.info(
+                        logging.info(
                             f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                         )
                         tmp_measurement_ids = copy(active_measurements)
@@ -88,7 +82,7 @@ class PING:
                                 active_measurements.remove(id)
                                 time.sleep(0.5)
 
-        logger.info(f"measurement : {tag} done")
+        logging.info(f"measurement : {tag} done")
 
         end_time = time.time()
 
@@ -115,7 +109,7 @@ class PING:
             for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                 subset_vp_ids = vp_ids[i: i + MAX_NUMBER_OF_VPS]
 
-                logger.debug(
+                logging.debug(
                     f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                 )
 
@@ -131,7 +125,7 @@ class PING:
 
                 # check number of parallel measurements in not too high
                 if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
-                    logger.info(
+                    logging.info(
                         f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                     )
                     tmp_measurement_ids = copy(active_measurements)
@@ -145,7 +139,7 @@ class PING:
                             active_measurements.remove(id)
                             time.sleep(0.5)
 
-        logger.info(f"measurement : {tag} done")
+        logging.info(f"measurement : {tag} done")
 
         end_time = time.time()
 

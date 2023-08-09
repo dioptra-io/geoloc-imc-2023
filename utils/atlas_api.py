@@ -6,8 +6,6 @@ import requests
 
 from collections import defaultdict, OrderedDict
 
-logger = logging.getLogger()
-
 
 class RIPEAtlas(object):
     def __init__(
@@ -51,8 +49,8 @@ class RIPEAtlas(object):
                 measurement_id = response["measurements"][0]
                 break
             except KeyError:
-                logger.info(response)
-                logger.warning("Too much measurements.", "Waiting.")
+                logging.info(response)
+                logging.warning("Too much measurements.", "Waiting.")
                 time.sleep(60)
         else:
             raise Exception("Too much measurements. Stopping.")
@@ -82,6 +80,16 @@ def wait_for(measurement_id: str, max_retry: int = 30) -> None:
         time.sleep(10)
 
     return None
+
+
+def is_geoloc_disputed(probe: dict) -> bool:
+    """check if geoloc disputed flag is contained in probe metadata"""
+
+    tags = probe["tags"]
+    for tag in tags:
+        if tag["slug"] == "system-geoloc-disputed":
+            return True
+    return False
 
 
 def get_measurement_url(measurement_id: int) -> str:
@@ -149,7 +157,7 @@ def parse_measurements_results(response: list) -> dict:
             }
 
         else:
-            logger.warning(f"no results: {result}")
+            logging.warning(f"no results: {result}")
 
     measurement_results[dst_addr] = OrderedDict(
         {
@@ -190,16 +198,6 @@ def get_measurements_from_tag(tag: str) -> dict:
     measurement_results = parse_measurements_results(response)
 
     return measurement_results
-
-
-def is_geoloc_disputed(probe: dict) -> bool:
-    """check if geoloc disputed flag is contained in probe metadata"""
-
-    tags = probe["tags"]
-    for tag in tags:
-        if tag["slug"] == "system-geoloc-disputed":
-            return True
-    return False
 
 
 def get_from_atlas(url: str):

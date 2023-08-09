@@ -1,17 +1,16 @@
-import os
-import time
+from default import COUNTRIES_CSV_FILE
+from ipaddress import IPv4Network
+from random import randint
+import csv
 import logging
 
+from multiprocessing import Pool
 from clickhouse_driver import Client
 
 from default import GEO_REPLICATION_DB, DB_HOST
 from utils.clickhouse_query import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
-from utils.helpers import distance, haversine, select_best_guess_centroid
-from utils.measurement_utils import load_json, dump_json
-
-
-speed_of_light = 300000
-speed_of_internet = speed_of_light * 2/3
+from utils.helpers import distance, haversine, select_best_guess_centroid, is_within_cirle
+from utils.file_utils import load_json, dump_json
 
 
 def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
@@ -73,27 +72,7 @@ def compute_geo_info(probes, serialized_file):
                 ases_anchors.add(asn_v4)
                 countries_anchors.add(country)
 
-    if not os.path.exists(serialized_file):
-        before = time.time()
-        vp_distance_matrix = {}
-        vp_coordinates_per_ip_l = sorted(
-            vp_coordinates_per_ip.items(), key=lambda x: x[0])
-        for i in range(len(vp_coordinates_per_ip_l)):
-            if i % 100 == 0:
-                print(i)
-            vp_i, vp_i_coordinates = vp_coordinates_per_ip_l[i]
-            if vp_i not in anchors:
-                continue
-            for j in range(len(vp_coordinates_per_ip)):
-                vp_j, vp_j_coordinates = vp_coordinates_per_ip_l[j]
-                distance = haversine(vp_i_coordinates, vp_j_coordinates)
-                vp_distance_matrix.setdefault(vp_i, {})[vp_j] = distance
-                vp_distance_matrix.setdefault(vp_j, {})[vp_i] = distance
-
-        after = time.time()
-        dump_json(vp_distance_matrix, serialized_file)
-    else:
-        vp_distance_matrix = load_json(serialized_file)
+    vp_distance_matrix = load_json(serialized_file)
 
     return vp_coordinates_per_ip, ip_per_coordinates, country_per_vp_ip, asn_per_vp_ip, vp_distance_matrix, anchors_per_ip_address
 
@@ -218,3 +197,129 @@ def country_filtering(probes: list, countries: dict) -> list:
             filtered_probes.append(probe)
 
     return filtered_probes
+
+
+def round_based_algorithm_impl(dst, rtt_per_src, vp_coordinates_per_ip, vps_per_target_greedy, asn_per_vp, threshold):
+    # Only take the first n_vps
+    vp_coordinates_per_ip_allowed = {x: vp_coordinates_per_ip[x] for x in vp_coordinates_per_ip if
+                                     x in vps_per_target_greedy}
+    guessed_geolocation_circles = select_best_guess_centroid(
+        dst, vp_coordinates_per_ip_allowed, rtt_per_src)
+    if guessed_geolocation_circles is None:
+        return dst, None, None
+    guessed_geolocation, circles = guessed_geolocation_circles
+    # Then take one probe per AS, city in the zone
+    probes_in_intersection = {}
+    for probe, probe_coordinates in vp_coordinates_per_ip.items():
+        is_in_intersection = True
+        for circle in circles:
+            lat_c, long_c, rtt_c, d_c, r_c = circle
+            if not is_within_cirle((lat_c, long_c), rtt_c, probe_coordinates, speed_threshold=2/3):
+                is_in_intersection = False
+                break
+        if is_in_intersection:
+            probes_in_intersection[probe] = probe_coordinates
+
+    # Now only take one probe per AS/city in the probes in intersection
+    selected_probes_per_asn = {}
+    for probe in probes_in_intersection:
+        asn = asn_per_vp[probe]
+        if asn not in selected_probes_per_asn:
+            selected_probes_per_asn.setdefault(asn, []).append(probe)
+            continue
+        else:
+            is_already_found_close = False
+            for selected_probe in selected_probes_per_asn[asn]:
+                distance = haversine(
+                    vp_coordinates_per_ip[probe], vp_coordinates_per_ip[selected_probe])
+                if distance < threshold:
+                    is_already_found_close = True
+                    break
+            if not is_already_found_close:
+                # Add this probe to the selected as we do not already have the same probe.
+                selected_probes_per_asn[asn].append(probe)
+
+    selected_probes = set()
+    for _, probes in selected_probes_per_asn.items():
+        selected_probes.update(probes)
+
+    vp_coordinates_per_ip_tier2 = {x: vp_coordinates_per_ip[x]
+                                   for x in vp_coordinates_per_ip
+                                   if x in selected_probes}
+    vp_coordinates_per_ip_tier2[dst] = vp_coordinates_per_ip[dst]
+    # Now evaluate the error with this subset of probes
+    error, circles = compute_error(
+        dst, vp_coordinates_per_ip_tier2, rtt_per_src)
+    return dst, error, len(selected_probes)
+
+
+def round_based_algorithm(greedy_probes, rtt_per_srcs_dst, vp_coordinates_per_ip,
+                          asn_per_vp, n_vps,
+                          threshold):
+    """
+    First is to use a subset of greedy probes, and then take 1 probe/AS in the given CBG area
+    :param greedy_probes:
+    :return:
+    """
+
+    vps_per_target_greedy = set(greedy_probes[:n_vps])
+
+    args = []
+    for i, (dst, rtt_per_src) in enumerate(sorted(rtt_per_srcs_dst.items())):
+        if dst not in vp_coordinates_per_ip:
+            continue
+        args.append((dst, rtt_per_src, vp_coordinates_per_ip,
+                    vps_per_target_greedy, asn_per_vp, threshold))
+
+    with Pool(24) as p:
+        results = p.starmap(round_based_algorithm_impl, args)
+        return results
+
+
+def iso_code_2_to_country():
+    country_by_iso_2 = {}
+    continent_by_iso_2 = {}
+    # Continent_Name,Continent_Code,Country_Name,Two_Letter_Country_Code,Three_Letter_Country_Code,Country_Number
+    with open(COUNTRIES_CSV_FILE) as f:
+        reader = csv.reader(f, delimiter=",", quotechar='"')
+        next(reader, None)
+        for line in reader:
+            continent_code = line[1]
+            country_name = line[2].split(",")[0]
+            country_iso_code_2 = line[3]
+            country_by_iso_2[country_iso_code_2] = country_name
+            continent_by_iso_2[country_iso_code_2] = continent_code
+    return continent_by_iso_2, country_by_iso_2
+
+
+def get_prefix_from_ip(addr):
+    """from an ip addr return /24 prefix"""
+    prefix = addr.split(".")[:-1]
+    prefix.append("0")
+    prefix = ".".join(prefix)
+    return prefix
+
+
+def get_target_hitlist(target_prefix, nb_targets, targets_per_prefix):
+    """from ip, return a list of target ips"""
+    target_addr_list = []
+    try:
+        target_addr_list = targets_per_prefix[target_prefix]
+    except KeyError:
+        pass
+
+    target_addr_list = list(set(target_addr_list))
+
+    if len(target_addr_list) < nb_targets:
+        prefix = IPv4Network(target_prefix + "/24")
+        target_addr_list.extend(
+            [
+                str(prefix[randint(1, 254)])
+                for _ in range(0, nb_targets - len(target_addr_list))
+            ]
+        )
+
+    if len(target_addr_list) > nb_targets:
+        target_addr_list = target_addr_list[:nb_targets]
+
+    return target_addr_list
