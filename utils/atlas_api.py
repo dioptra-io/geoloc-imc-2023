@@ -236,12 +236,8 @@ def get_atlas_probes() -> list:
 
             reduced_probe = {
                 "address_v4": probe["address_v4"],
-                "address_v6": probe["address_v6"],
                 "asn_v4": probe["asn_v4"],
-                "asn_v6": probe["asn_v6"],
                 "country_code": probe["country_code"],
-                "description": probe["description"],
-                "first_connected": probe["first_connected"],
                 "geometry": probe["geometry"]
             }
             probes.append(reduced_probe)
@@ -272,12 +268,8 @@ def get_atlas_anchors() -> list:
 
             reduced_anchor = {
                 "address_v4": anchor["address_v4"],
-                "address_v6": anchor["address_v6"],
                 "asn_v4": anchor["asn_v4"],
-                "asn_v6": anchor["asn_v6"],
                 "country_code": anchor["country_code"],
-                "description": anchor["description"],
-                "first_connected": anchor["first_connected"],
                 "geometry": anchor["geometry"]
             }
             anchors.append(reduced_anchor)

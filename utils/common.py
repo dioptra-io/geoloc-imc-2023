@@ -1,16 +1,15 @@
-from default import COUNTRIES_CSV_FILE
-from ipaddress import IPv4Network
-from random import randint
 import csv
 import logging
 
+from ipaddress import IPv4Network
+from random import randint
 from multiprocessing import Pool
 from clickhouse_driver import Client
 
-from default import GEO_REPLICATION_DB, DB_HOST
-from utils.clickhouse_query import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
-from utils.helpers import distance, haversine, select_best_guess_centroid, is_within_cirle
 from utils.file_utils import load_json, dump_json
+from utils.clickhouse_query import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
+from utils.helpers import distance, haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections
+from default import GEO_REPLICATION_DB, DB_HOST, SPEED_OF_INTERNET, COUNTRIES_CSV_FILE
 
 
 def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
@@ -145,7 +144,7 @@ def compute_remove_wrongly_geolocated_probes(rtts_per_srcs_dst, vp_coordinates_p
             if probe not in vp_distance_matrix[dst]:
                 continue
             max_theoretical_distance = (
-                speed_of_internet * min_rtt_probe / 1000) / 2
+                SPEED_OF_INTERNET * min_rtt_probe / 1000) / 2
             if vp_distance_matrix[dst][probe] > max_theoretical_distance:
                 # Impossible distance
                 speed_of_internet_violations_per_ip.setdefault(
@@ -323,3 +322,112 @@ def get_target_hitlist(target_prefix, nb_targets, targets_per_prefix):
         target_addr_list = target_addr_list[:nb_targets]
 
     return target_addr_list
+
+
+def every_tier_result(data):
+    # data of one target if one tier is not succesful we take the previous one
+    # for t1 we take cbg center, t2 the center of intercection cercles from the landmarks, t3 "closest" landmarks, t4 best landmark
+    lat = 0
+    lon = 0
+    res = {'lat1': 0, 'lon1': 0, 'lat2': 0, 'lon2': 0,
+           'lat3': 0, 'lon3': 0, 'lat4': 0, 'lon4': 0}
+    if not data['tier1:done']:
+        # print("DO NOT KNOW HOW TO HANDEL THIS PLS HELP: Tier1 Failed")
+        return res
+    lat = data['tier1:lat']
+    lon = data['tier1:lon']
+    res['lat1'] = lat
+    res['lon1'] = lon
+
+    best_dist = 50000
+    best_correct_lat = None
+    best_correct_lon = None
+    for f in ['tier2:landmarks', 'tier3:landmarks']:
+        if f in data:
+            for _, _, l_lat, l_lon in data[f]:
+                dist = haversine(
+                    (l_lat, l_lon), (data['lat_c'], data['lon_c']))
+                if dist < best_dist:
+                    best_dist = dist
+                    best_correct_lat = l_lat
+                    best_correct_lon = l_lon
+
+    if best_correct_lat != None and best_correct_lon != None:
+        res['lat4'] = best_correct_lat
+        res['lon4'] = best_correct_lon
+
+    best_dist = 50000
+    chosen_lat = None
+    chosen_lon = None
+    for f in ['tier2:traceroutes', 'tier3:traceroutes']:
+        if f in data:
+            for _, _, _, _, rtt, l_lat, l_lon, _ in data[f]:
+                if rtt < 0:
+                    continue
+                if rtt < best_dist:
+                    best_dist = rtt
+                    chosen_lat = l_lat
+                    chosen_lon = l_lon
+
+    if chosen_lat != None and chosen_lon != None:
+        res['lat3'] = chosen_lat
+        res['lon3'] = chosen_lon
+
+    if not data['tier2:done']:
+        res['lat2'] = res['lat1']
+        res['lon2'] = res['lon1']
+        if chosen_lat == None or chosen_lon == None:
+            res['lat3'] = res['lat1']
+            res['lon3'] = res['lon1']
+        if best_correct_lat == None or best_correct_lon == None:
+            res['lat4'] = res['lat1']
+            res['lon4'] = res['lon1']
+        return res
+
+    points = circle_intersections(
+        data['tier2:final_circles'], data['speed_threshold'])
+    if len(points) > 0:
+        lat, lon = polygon_centroid(points)
+        res['lat2'] = lat
+        res['lon2'] = lon
+    else:
+        res['lat2'] = res['lat1']
+        res['lon2'] = res['lon1']
+
+    if not data['tier3:done']:
+        if chosen_lat == None or chosen_lon == None:
+            res['lat3'] = res['lat2']
+            res['lon3'] = res['lon2']
+        else:
+            res['lat3'] = chosen_lat
+            res['lon3'] = chosen_lon
+        if best_correct_lon == None or best_correct_lat == None:
+            res['lat4'] = res['lat1']
+            res['lon4'] = res['lon1']
+        return res
+
+    if best_correct_lon != None and best_correct_lat != None:
+        res['lat4'] = best_correct_lat
+        res['lon4'] = best_correct_lon
+    else:
+        res['lat4'] = res['lat1']
+        res['lon4'] = res['lon1']
+
+    return res
+
+
+def every_tier_result_and_errors(data):
+    res = every_tier_result(data)
+    # res['error1'] = distance(data['lat_c'], res['lat1'], data['lon_c'], res['lon1'])
+    # res['error2'] = distance(data['lat_c'], res['lat2'], data['lon_c'], res['lon2'])
+    # res['error3'] = distance(data['lat_c'], res['lat3'], data['lon_c'], res['lon3'])
+    # res['error4'] = distance(data['lat_c'], res['lat4'], data['lon_c'], res['lon4'])
+    res['error1'] = haversine(
+        (res['lat1'], res['lon1']), (data['lat_c'], data['lon_c']))
+    res['error2'] = haversine(
+        (res['lat2'], res['lon2']), (data['lat_c'], data['lon_c']))
+    res['error3'] = haversine(
+        (res['lat3'], res['lon3']), (data['lat_c'], data['lon_c']))
+    res['error4'] = haversine(
+        (res['lat4'], res['lon4']), (data['lat_c'], data['lon_c']))
+    return res

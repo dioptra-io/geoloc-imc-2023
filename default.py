@@ -10,6 +10,7 @@ THRESHOLD_DISTANCES = [0, 40, 100, 500, 1000]
 N_VPS_SELECTION_ALGORITHM = [1, 3, 10]
 SPEED_OF_LIGHT = 300000
 SPEED_OF_INTERNET = SPEED_OF_LIGHT * 2/3
+POPULATION_THRESHOLD = 100000
 
 
 # Default path
@@ -17,11 +18,12 @@ DEFAULT_DIR: Path = Path(__file__).resolve().parent
 
 
 # dir path
-RESULT_MILLION_SCALE_PATH: Path = DEFAULT_DIR / \
+MEASUREMENTS_MILLION_SCALE_PATH: Path = DEFAULT_DIR / \
     "datasets/measurements/million_scale/"
-RESULT_STREET_LEVEL_PATH: Path = DEFAULT_DIR / \
+MEASUREMENTS_STREET_LEVEL_PATH: Path = DEFAULT_DIR / \
     "datasets/measurements/street_level/"
-RESULT_PDF_PATH: Path = DEFAULT_DIR / "datasets/pdf/"
+PDF_PATH: Path = DEFAULT_DIR / "datasets/pdf/"
+ANALYSIS_PATH: Path = DEFAULT_DIR / "datasets/analysis/"
 MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / \
     "datasets/million_scale/measurement_config/"
 ATLAS_PATH: Path = DEFAULT_DIR / \
@@ -35,9 +37,6 @@ ANCHORS_FILE: Path = ATLAS_PATH / "anchors.json"
 PROBES_FILE: Path = ATLAS_PATH / "probes.json"
 PROBES_AND_ANCHORS_FILE: Path = ATLAS_PATH / "probes_and_anchors.json"
 REMOVED_PROBES_FILE: Path = ATLAS_PATH / "removed_probes.json"
-BAD_ANCHORS_FILE: Path = ATLAS_PATH / "bad_anchors.json"
-ANCHORS_IP_LIST_FILE: Path = ATLAS_PATH / "anchors_ip_list.json"
-PROBES_IP_LIST_FILE: Path = ATLAS_PATH / "probes_ip_list.json"
 GREEDY_PROBES_FILE: Path = ATLAS_PATH / "greedy_probes.json"
 
 
@@ -65,75 +64,77 @@ MAXMIND_GEO_FILE: Path = VARIOUS_PATH / "maxmind_free_geo_anchors.json"
 
 
 # pdf files
-GEO_DATABASE_FILE: Path = RESULT_PDF_PATH / "geo_databases.pdf"
-CBG_THRESHOLD_BASIC_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds.pdf"
-CBG_THRESHOLD_CIRCLES_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds_circles.pdf"
-CBG_THRESHOLD_PROBES_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds_probes.pdf"
-CBG_THRESHOLD_ALL_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds_all.pdf"
-CBG_THRESHOLD_VP_SELECTION_FILE: Path = RESULT_PDF_PATH / \
+GEO_DATABASE_FILE: Path = PDF_PATH / "geo_databases.pdf"
+CBG_THRESHOLD_BASIC_FILE: Path = PDF_PATH / "cbg_thresholds.pdf"
+CBG_THRESHOLD_CIRCLES_FILE: Path = PDF_PATH / "cbg_thresholds_circles.pdf"
+CBG_THRESHOLD_PROBES_FILE: Path = PDF_PATH / "cbg_thresholds_probes.pdf"
+CBG_THRESHOLD_ALL_FILE: Path = PDF_PATH / "cbg_thresholds_all.pdf"
+CBG_THRESHOLD_VP_SELECTION_FILE: Path = PDF_PATH / \
     "cbg_thresholds_vp_selection.pdf"
-CBG_THRESHOLD_FIXED_SET_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds_fixed_set.pdf"
-CBG_THRESHOLD_CONTINENT_FILE: Path = RESULT_PDF_PATH / "cbg_thresholds_continent.pdf"
-RTTS_PDF_FILE: Path = RESULT_PDF_PATH / "rtts_per_closest_probe.pdf"
-RTTS_FIXED_SET_FILE: Path = RESULT_PDF_PATH / "rtts_fixed_set.pdf"
-ROUND_ALGORITHM_ERROR_FILE: Path = RESULT_PDF_PATH / "round_algorithm_error.pdf"
-ROUND_ALGORITHM_VPS_FILE: Path = RESULT_PDF_PATH / "round_algorithm_vps.pdf"
-CLOSE_LANDMARK_FILE: Path = RESULT_PDF_PATH / "cdf_close_landmark_check.pdf"
-CLOSE_LANDMARK_LOG_FILE: Path = RESULT_PDF_PATH / \
+CBG_THRESHOLD_FIXED_SET_FILE: Path = PDF_PATH / "cbg_thresholds_fixed_set.pdf"
+CBG_THRESHOLD_CONTINENT_FILE: Path = PDF_PATH / "cbg_thresholds_continent.pdf"
+RTTS_PDF_FILE: Path = PDF_PATH / "rtts_per_closest_probe.pdf"
+RTTS_FIXED_SET_FILE: Path = PDF_PATH / "rtts_fixed_set.pdf"
+ROUND_ALGORITHM_ERROR_FILE: Path = PDF_PATH / "round_algorithm_error.pdf"
+ROUND_ALGORITHM_VPS_FILE: Path = PDF_PATH / "round_algorithm_vps.pdf"
+CLOSE_LANDMARK_FILE: Path = PDF_PATH / "cdf_close_landmark_check.pdf"
+CLOSE_LANDMARK_LOG_FILE: Path = PDF_PATH / \
     "cdf_close_landmark_check_log.pdf"
-CLOSE_LANDMARK_FILE_2: Path = RESULT_PDF_PATH / "cdf_close_landmark_check_2.pdf"
-CLOSE_LANDMARK_LOG_FILE_2: Path = RESULT_PDF_PATH / \
+CLOSE_LANDMARK_FILE_2: Path = PDF_PATH / "cdf_close_landmark_check_2.pdf"
+CLOSE_LANDMARK_LOG_FILE_2: Path = PDF_PATH / \
     "cdf_close_landmark_check_2_log.pdf"
 
 # important results
-FIG_3A_FILE: Path = RESULT_PDF_PATH / "accuracy_vs_n_vps_probes_3a.pdf"
-FIG_3B_FILE: Path = RESULT_PDF_PATH / "accuracy_vs_n_vps_probes_3b.pdf"
+FIG_3A_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes_3a.pdf"
+FIG_3B_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes_3b.pdf"
 
 
 # result files
-TARGET_ANCHOR_VP: Path = RESULT_MILLION_SCALE_PATH / "target_anchor_vp_test.json"
-TARGET_PROBE_VP: Path = RESULT_MILLION_SCALE_PATH / "target_probe_vp_test.json"
-PREFIX_ANCHOR_VP: Path = RESULT_MILLION_SCALE_PATH / "prefix_anchor_vp_test.json"
-PREFIX_PROBE_VP: Path = RESULT_MILLION_SCALE_PATH / "prefix_probe_vp_test.json"
-TARGET_ALL_VP: Path = RESULT_MILLION_SCALE_PATH / "target_all_vp_test.json"
+TARGET_ANCHOR_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
+    "target_anchor_vp_test.json"
+TARGET_PROBE_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_probe_vp_test.json"
+PREFIX_ANCHOR_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
+    "prefix_anchor_vp_test.json"
+PREFIX_PROBE_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "prefix_probe_vp_test.json"
+TARGET_ALL_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_all_vp_test.json"
 
-LOCAL_SERVER_GEOLOC_BATCH_RESULTS_FILE: Path = RESULT_STREET_LEVEL_PATH / "all_res.json"
-FINAL_ANALYSABLE_FILE: Path = RESULT_STREET_LEVEL_PATH / "final_all_res.json"
+BASIC_ANALYSABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
+FINAL_ANALYSABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "final_all_res.json"
 
 
 # pas top pour l'instant
-ANCHORS_TO_ANCHORS_RESULT_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+ANCHORS_TO_ANCHORS_RESULT_FILE: Path = ANALYSIS_PATH / \
     "cbg_thresholds_anchors_to_anchors.json"
-PROBES_TO_ANCHORS_RESULT_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+PROBES_TO_ANCHORS_RESULT_FILE: Path = ANALYSIS_PATH / \
     "cbg_thresholds_probes_to_anchors.json"
 
-FIXED_SET_ONE_PROBE_PER_CITY_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+FIXED_SET_ONE_PROBE_PER_CITY_FILE: Path = ANALYSIS_PATH / \
     "cbg_thresholds_fixed_set_probes_one_per_city.json"
-FIXED_SET_ONE_PROBE_PER_CITY_ASN_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+FIXED_SET_ONE_PROBE_PER_CITY_ASN_FILE: Path = ANALYSIS_PATH / \
     "cbg_thresholds_fixed_set_probes_one_per_city_asn.json"
 
-VP_SELECTION_ALGORITHM_1_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_1_FILE: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_1.json"
-VP_SELECTION_ALGORITHM_3_FILES: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_3_FILES: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_3.json"
-VP_SELECTION_ALGORITHM_10_FILES: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_10_FILES: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_10.json"
 
-VP_SELECTION_ALGORITHM_PROBES_1_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_PROBES_1_FILE: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_probes_1.json"
-VP_SELECTION_ALGORITHM_PROBES_3_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_PROBES_3_FILE: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_probes_3.json"
-VP_SELECTION_ALGORITHM_PROBES_10_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+VP_SELECTION_ALGORITHM_PROBES_10_FILE: Path = ANALYSIS_PATH / \
     "vp_selection_algorithm_probes_10.json"
 
 
-RTTS_PER_CLOSEST_PROBES_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+RTTS_PER_CLOSEST_PROBES_FILE: Path = ANALYSIS_PATH / \
     "rtts_per_closest_probes.json"
-MIN_RTT_PER_DIST_FILE: Path = RESULT_MILLION_SCALE_PATH / "rmin_rtt_per_dst.json"
+MIN_RTT_PER_DIST_FILE: Path = ANALYSIS_PATH / "rmin_rtt_per_dst.json"
 ACCURACY_VS_N_VPS_FILE = "accuracy_vs_n_vps.json"
-ACCURACY_VS_N_VPS_PROBES_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+ACCURACY_VS_N_VPS_PROBES_FILE: Path = ANALYSIS_PATH / \
     "accuracy_vs_n_vps_probes.json"
-ROUND_BASED_ALGORITHM_FILE: Path = RESULT_MILLION_SCALE_PATH / \
+ROUND_BASED_ALGORITHM_FILE: Path = ANALYSIS_PATH / \
     "round_based_algorithm_error_cdf.json"
 
 # clickhouse

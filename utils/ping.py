@@ -4,9 +4,8 @@ import time
 from copy import copy
 
 from utils.atlas_api import RIPEAtlas, wait_for
-from utils.geoloc_earth import get_target_hitlist
-from default import (NB_PACKETS, NB_TARGETS_PER_PREFIX,
-                     MAX_NUMBER_OF_VPS, NB_MAX_CONCURRENT_MEASUREMENTS)
+from utils.common import get_target_hitlist
+from default import NB_PACKETS, NB_TARGETS_PER_PREFIX, MAX_NUMBER_OF_VPS, NB_MAX_CONCURRENT_MEASUREMENTS
 
 
 class PING:

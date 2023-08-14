@@ -1,9 +1,10 @@
-from matplotlib.patches import Polygon
-from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import matplotlib
 import plotly.express as px
 import pandas as pd
+
+from matplotlib.patches import Polygon
+from matplotlib.lines import Line2D
 
 from utils.helpers import circle_preprocessing, get_points_on_circle
 
