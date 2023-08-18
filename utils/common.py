@@ -134,7 +134,7 @@ def compute_remove_wrongly_geolocated_probes(rtts_per_srcs_dst, vp_coordinates_p
         if dst not in vp_coordinates_per_ip:
             continue
 
-        if dst in removed_anchors:
+        if dst in removed_anchors or dst not in vp_distance_matrix:
             continue
 
         for probe, rtts in rtts_per_src.items():
@@ -269,7 +269,6 @@ def round_based_algorithm(greedy_probes, rtt_per_srcs_dst, vp_coordinates_per_ip
             continue
         args.append((dst, rtt_per_src, vp_coordinates_per_ip,
                     vps_per_target_greedy, asn_per_vp, threshold))
-
     with Pool(24) as p:
         results = p.starmap(round_based_algorithm_impl, args)
         return results

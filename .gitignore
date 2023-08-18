@@ -8,3 +8,6 @@ __pycache__/
 *.pdf
 *.png
 *.csv
+*.dat
+*.tif
+*.tree

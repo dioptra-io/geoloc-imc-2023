@@ -37,6 +37,7 @@ ANCHORS_FILE: Path = ATLAS_PATH / "anchors.json"
 PROBES_FILE: Path = ATLAS_PATH / "probes.json"
 PROBES_AND_ANCHORS_FILE: Path = ATLAS_PATH / "probes_and_anchors.json"
 REMOVED_PROBES_FILE: Path = ATLAS_PATH / "removed_probes.json"
+FILTERED_PROBES_FILE: Path = ATLAS_PATH / "filtered_probes.json"
 GREEDY_PROBES_FILE: Path = ATLAS_PATH / "greedy_probes.json"
 
 
@@ -47,21 +48,28 @@ COUNTRIES_CSV_FILE: Path = GEOGRAPHIC_PATH / "countries_iso_code_2.csv"
 
 POPULATION_CITY_FILE: Path = GEOGRAPHIC_PATH / "population.json"
 CITIES_500_FILE: Path = GEOGRAPHIC_PATH / "cities500.txt"
+POPULATION_DENSITY_FILE: Path = GEOGRAPHIC_PATH / \
+    "gpw_v4_population_density_rev11_2020_30_sec.tif"
 
 
 # various files
-PAIRWISE_DISTANCE_ANCHOR_FILE = VARIOUS_PATH / \
-    "pairwise_distance_ripe_anchors.json"
-PAIRWISE_DISTANCE_PROBE_FILE = VARIOUS_PATH / \
+PAIRWISE_DISTANCE_FILE = VARIOUS_PATH / \
     "pairwise_distance_ripe_probes.json"
 
 HITLIST_FILE: Path = VARIOUS_PATH / "parsed_hitlist.json"
 ADDRESS_FILE: Path = VARIOUS_PATH / \
     "internet_address_verfploeter_hitlist_it102w-20230125.fsdb"
 
+GEOLITE_FILE: Path = VARIOUS_PATH / "GeoLite2-City-Blocks-IPv4_20230516.tree"
 IP_INFO_GEO_FILE: Path = VARIOUS_PATH / "ip_info_geo_anchors.json"
 MAXMIND_GEO_FILE: Path = VARIOUS_PATH / "maxmind_free_geo_anchors.json"
 
+GEOPAPIFY_1_FILE: Path = VARIOUS_PATH / \
+    "geocoded_by_geoapify-10_05_2023_0_500.csv"
+GEOPAPIFY_2_FILE: Path = VARIOUS_PATH / \
+    "geocoded_by_geoapify-10_05_2023_500_last.csv"
+
+IP_TO_ASN_FILE: Path = VARIOUS_PATH / "2022-03-28.dat"
 
 # pdf files
 GEO_DATABASE_FILE: Path = PDF_PATH / "geo_databases.pdf"
@@ -156,7 +164,3 @@ RIPE_CREDENTIALS = {
 # Omar à régler
 CACHED_WEBSITES_FILE: Path = 'websites.json'
 TMP_GEOLOC_INFO_ONE_TARGET_FILE: Path = 'all_info_geoloc.json'
-
-
-IP_TO_ASN_FILE: Path = '/srv/kevin/internet-measurements-metadata/resources/ip2as/routeviews/2022-03-28.dat'
-# IP_TO_ASN_FILE: Path = '/home/kvermeulen/street_lvl/street_lvl/2022-03-28.dat'

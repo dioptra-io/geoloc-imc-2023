@@ -37,6 +37,7 @@ def compute_geolocation_features_per_ip_impl(dst, rtt_per_src, vps_per_target,
         if is_use_prefix:
             vp_per_target_allowed = vps_per_target[dst_prefix]
         else:
+            print(dst)
             vp_per_target_allowed = vps_per_target[dst]
 
         if distance_operator == ">":
@@ -112,7 +113,7 @@ def compute_geolocation_features_per_ip(rtt_per_srcs_dst, vp_coordinates_per_ip,
         """
     features = {}
     args = []
-
+    print("on est la")
     for dst, rtt_per_src in sorted(rtt_per_srcs_dst.items()):
         if dst not in vp_coordinates_per_ip:
             # We do not know the geolocation of the anchor.
@@ -121,13 +122,14 @@ def compute_geolocation_features_per_ip(rtt_per_srcs_dst, vp_coordinates_per_ip,
                      vp_distance_matrix[dst],
                      threshold_distances,
                      distance_operator, max_vps, is_use_prefix))
-
+    print(len(args))
     # if len(batch) > 0:
     #     args.append((batch, vps_per_target, vp_coordinates_per_ip, vp_distance_matrix,
     #                  threshold_distances,
     #                  distance_operator, max_vps, is_use_prefix))
 
     if is_multiprocess:
+        print("multi")
         with Pool(24) as p:
             features_all_process = p.starmap(
                 compute_geolocation_features_per_ip_impl, args[:])
