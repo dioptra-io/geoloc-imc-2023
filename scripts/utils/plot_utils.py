@@ -6,7 +6,7 @@ import pandas as pd
 from matplotlib.patches import Polygon
 from matplotlib.lines import Line2D
 
-from utils.helpers import circle_preprocessing, get_points_on_circle
+from scripts.utils.helpers import circle_preprocessing, get_points_on_circle
 
 
 matplotlib.use('Agg')

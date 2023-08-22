@@ -1,15 +1,157 @@
-import csv
-import logging
+import random
+import numpy as np
 
-from ipaddress import IPv4Network
-from random import randint
-from multiprocessing import Pool
+from multiprocessing.pool import Pool
 from clickhouse_driver import Client
 
-from utils.file_utils import load_json, dump_json
-from utils.clickhouse_query import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
-from utils.helpers import distance, haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections
-from default import GEO_REPLICATION_DB, DB_HOST, SPEED_OF_INTERNET, COUNTRIES_CSV_FILE
+from scripts.utils.file_utils import load_json
+from scripts.utils.helpers import haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections
+from scripts.utils.clickhouse_utils import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
+from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
+from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST
+
+
+########## MILLION SCALE ##########
+
+def compute_geolocation_features_per_ip_impl(dst, rtt_per_src, vps_per_target,
+                                             vp_coordinates_per_ip, vp_distance_matrix_dst,
+                                             threshold_distances,
+                                             distance_operator, max_vps,
+                                             is_use_prefix):
+
+    features = {}
+    if is_use_prefix:
+        dst_prefix = get_prefix_from_ip(dst)
+        if dst_prefix not in vps_per_target:
+            print(
+                f"Error, prefix {dst_prefix} not in measurements for VP selection algorithm")
+            return features
+    else:
+        if dst not in vps_per_target:
+            print(
+                f"Error, prefix {dst} not in measurements for VP selection algorithm")
+            return features
+    # Compute error with different configurations
+    errors = []
+
+    for threshold_distance in threshold_distances:
+        if is_use_prefix:
+            vp_per_target_allowed = vps_per_target[dst_prefix]
+        else:
+            vp_per_target_allowed = vps_per_target[dst]
+
+        if distance_operator == ">":
+            vp_coordinates_per_ip_filter = {vp: vp_coordinates_per_ip[vp]
+                                            for vp in vp_coordinates_per_ip
+                                            if (vp_distance_matrix_dst[vp] > threshold_distance
+                                                and vp in vp_per_target_allowed)
+                                            or vp == dst}
+
+        elif distance_operator == "<=":
+            vp_coordinates_per_ip_filter = {vp: vp_coordinates_per_ip[vp]
+                                            for vp in vp_coordinates_per_ip
+                                            if (vp_distance_matrix_dst[vp] <= threshold_distance
+                                            and vp in vp_per_target_allowed)
+                                            or vp == dst}
+        else:
+            raise Exception("Not a good operator. Please > or <= ")
+
+        if len(vp_coordinates_per_ip_filter) > max_vps:
+            vp_coordinates_per_ip_filter_no_dst = dict(
+                vp_coordinates_per_ip_filter)
+            del vp_coordinates_per_ip_filter_no_dst[dst]
+            vp_coordinates_per_ip_filter_sample = dict(
+                random.sample(list(vp_coordinates_per_ip_filter_no_dst.items()), max_vps))
+            vp_coordinates_per_ip_filter_sample[dst] = vp_coordinates_per_ip_filter[dst]
+        else:
+            vp_coordinates_per_ip_filter_sample = vp_coordinates_per_ip_filter
+
+        error, circles = compute_error(
+            dst, vp_coordinates_per_ip_filter_sample, rtt_per_src)
+        errors.append((error, circles))
+        features.setdefault(threshold_distance, []).append(
+            (dst, error, len(circles)))
+    return features
+
+
+def compute_geolocation_features_per_ip(rtt_per_srcs_dst, vp_coordinates_per_ip, threshold_distances,
+                                        vps_per_target,
+                                        distance_operator,
+                                        max_vps,
+                                        is_use_prefix,
+                                        vp_distance_matrix,
+                                        is_multiprocess=True):
+    """
+        Compute some features to get some scatter plots in functions of the accuracy
+        Features are:
+        Topological distance from the closest VP
+        Geographical distance from the closest VP
+        """
+    features = {}
+    args = []
+    for dst, rtt_per_src in sorted(rtt_per_srcs_dst.items()):
+        if dst not in vp_coordinates_per_ip:
+            # We do not know the geolocation of the anchor.
+            continue
+        args.append((dst, rtt_per_src, vps_per_target, vp_coordinates_per_ip,
+                     vp_distance_matrix[dst],
+                     threshold_distances,
+                     distance_operator, max_vps, is_use_prefix))
+    if is_multiprocess:
+        # with Pool(24) as p:
+        with Pool(4) as p:
+            features_all_process = p.starmap(
+                compute_geolocation_features_per_ip_impl, args[:])
+            for features_process in features_all_process:
+                for threshold, dst_error_distances in features_process.items():
+                    features.setdefault(threshold, []).extend(
+                        dst_error_distances)
+    else:
+        for arg in args:
+            dst, rtt_per_src, vps_per_target, vp_coordinates_per_ip, vp_distance_matrix_dst, \
+                threshold_distances, \
+                distance_operator, max_vps, is_use_prefix = arg
+
+            features_process = compute_geolocation_features_per_ip_impl(dst, rtt_per_src, vps_per_target, vp_coordinates_per_ip,
+                                                                        vp_distance_matrix_dst, threshold_distances,
+                                                                        distance_operator, max_vps, is_use_prefix)
+            for threshold, dst_error_distances in features_process.items():
+                features.setdefault(threshold, []).extend(dst_error_distances)
+    return features
+
+
+def compute_accuracy_vs_number_of_vps_impl(rtt_per_srcs_dst, vp_distance_matrix, available_vps, random_n_vp, vp_coordinates_per_ip,):
+
+    random_vps = random.sample(available_vps, random_n_vp)
+    vps_per_target = {x: list(set(random_vps)) for x in rtt_per_srcs_dst}
+    features = compute_geolocation_features_per_ip(rtt_per_srcs_dst, vp_coordinates_per_ip,
+                                                   [0],
+                                                   vps_per_target=vps_per_target,
+                                                   distance_operator=">", max_vps=100000,
+                                                   is_use_prefix=False,
+                                                   vp_distance_matrix=vp_distance_matrix,
+                                                   is_multiprocess=True
+                                                   )
+
+    features = features[0]
+    median_error = np.median([x[1] for x in features if x[1] is not None])
+    return median_error
+
+
+def compute_accuracy_vs_number_of_vps(available_vps, rtt_per_srcs_dst, vp_coordinates_per_ip,
+                                      vp_distance_matrix, subset_sizes):
+    random.seed(42)
+
+    accuracy_vs_n_vps = {}
+    for random_n_vp in subset_sizes:
+        print(f"Starting computing for random VPs {random_n_vp}")
+        median_error_cdf = []
+        for trial in range(0, 100):
+            median_error = compute_accuracy_vs_number_of_vps_impl(
+                rtt_per_srcs_dst, vp_distance_matrix, available_vps, random_n_vp, vp_coordinates_per_ip)
+            median_error_cdf.append(median_error)
+        accuracy_vs_n_vps[random_n_vp] = median_error_cdf
+    return accuracy_vs_n_vps
 
 
 def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
@@ -97,6 +239,8 @@ def compute_error_threshold_cdfs(errors_threshold, filter_dsts=None):
         if filter_dsts is not None and threshold in filter_dsts:
             allowed_dsts = set(
                 x[0] for x in filter_dsts[threshold] if x[1] is not None)
+        else:
+            allowed_dsts = set()
         threshold_i = int(threshold)
         error_threshold_cdf = []
         circles_threshold_cdf = []
@@ -169,33 +313,6 @@ def compute_remove_wrongly_geolocated_probes(rtts_per_srcs_dst, vp_coordinates_p
             [len(x) for x in speed_of_internet_violations_per_ip.values()])
     print(len(removed_probes))
     return removed_probes
-
-
-def country_filtering(probes: list, countries: dict) -> list:
-    filtered_probes = []
-    for probe in probes:
-
-        # check if probe coordinates are close to default location
-        try:
-            country_geo = countries[probe["country_code"]]
-        except KeyError as e:
-            logging.info(
-                f"error country code {probe['country_code']} is unknown")
-            continue
-
-        # if the country code is unknown, remove probe from dataset
-        country_lat = float(country_geo["latitude"])
-        country_lon = float(country_geo["longitude"])
-
-        probe_lat = float(probe["geometry"]["coordinates"][1])
-        probe_lon = float(probe["geometry"]["coordinates"][0])
-
-        dist = distance(country_lat, probe_lat, country_lon, probe_lon)
-
-        if dist > 5:
-            filtered_probes.append(probe)
-
-    return filtered_probes
 
 
 def round_based_algorithm_impl(dst, rtt_per_src, vp_coordinates_per_ip, vps_per_target_greedy, asn_per_vp, threshold):
@@ -274,54 +391,7 @@ def round_based_algorithm(greedy_probes, rtt_per_srcs_dst, vp_coordinates_per_ip
         return results
 
 
-def iso_code_2_to_country():
-    country_by_iso_2 = {}
-    continent_by_iso_2 = {}
-    # Continent_Name,Continent_Code,Country_Name,Two_Letter_Country_Code,Three_Letter_Country_Code,Country_Number
-    with open(COUNTRIES_CSV_FILE) as f:
-        reader = csv.reader(f, delimiter=",", quotechar='"')
-        next(reader, None)
-        for line in reader:
-            continent_code = line[1]
-            country_name = line[2].split(",")[0]
-            country_iso_code_2 = line[3]
-            country_by_iso_2[country_iso_code_2] = country_name
-            continent_by_iso_2[country_iso_code_2] = continent_code
-    return continent_by_iso_2, country_by_iso_2
-
-
-def get_prefix_from_ip(addr):
-    """from an ip addr return /24 prefix"""
-    prefix = addr.split(".")[:-1]
-    prefix.append("0")
-    prefix = ".".join(prefix)
-    return prefix
-
-
-def get_target_hitlist(target_prefix, nb_targets, targets_per_prefix):
-    """from ip, return a list of target ips"""
-    target_addr_list = []
-    try:
-        target_addr_list = targets_per_prefix[target_prefix]
-    except KeyError:
-        pass
-
-    target_addr_list = list(set(target_addr_list))
-
-    if len(target_addr_list) < nb_targets:
-        prefix = IPv4Network(target_prefix + "/24")
-        target_addr_list.extend(
-            [
-                str(prefix[randint(1, 254)])
-                for _ in range(0, nb_targets - len(target_addr_list))
-            ]
-        )
-
-    if len(target_addr_list) > nb_targets:
-        target_addr_list = target_addr_list[:nb_targets]
-
-    return target_addr_list
-
+########## STREET LEVEL ##########
 
 def every_tier_result(data):
     # data of one target if one tier is not succesful we take the previous one
@@ -331,7 +401,7 @@ def every_tier_result(data):
     res = {'lat1': 0, 'lon1': 0, 'lat2': 0, 'lon2': 0,
            'lat3': 0, 'lon3': 0, 'lat4': 0, 'lon4': 0}
     if not data['tier1:done']:
-        # print("DO NOT KNOW HOW TO HANDEL THIS PLS HELP: Tier1 Failed")
+        print("Tier1 Failed")
         return res
     lat = data['tier1:lat']
     lon = data['tier1:lon']
@@ -417,10 +487,6 @@ def every_tier_result(data):
 
 def every_tier_result_and_errors(data):
     res = every_tier_result(data)
-    # res['error1'] = distance(data['lat_c'], res['lat1'], data['lon_c'], res['lon1'])
-    # res['error2'] = distance(data['lat_c'], res['lat2'], data['lon_c'], res['lon2'])
-    # res['error3'] = distance(data['lat_c'], res['lat3'], data['lon_c'], res['lon3'])
-    # res['error4'] = distance(data['lat_c'], res['lat4'], data['lon_c'], res['lon4'])
     res['error1'] = haversine(
         (res['lat1'], res['lon1']), (data['lat_c'], data['lon_c']))
     res['error2'] = haversine(

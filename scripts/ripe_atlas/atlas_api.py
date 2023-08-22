@@ -82,6 +82,14 @@ def wait_for(measurement_id: str, max_retry: int = 30) -> None:
     return None
 
 
+def get_prefix_from_ip(addr):
+    """from an ip addr return /24 prefix"""
+    prefix = addr.split(".")[:-1]
+    prefix.append("0")
+    prefix = ".".join(prefix)
+    return prefix
+
+
 def is_geoloc_disputed(probe: dict) -> bool:
     """check if geoloc disputed flag is contained in probe metadata"""
 
