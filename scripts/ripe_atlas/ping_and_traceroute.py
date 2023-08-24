@@ -1,6 +1,7 @@
 import logging
 import time
 
+from pprint import pprint
 from ipaddress import IPv4Network
 from random import randint
 from copy import copy
@@ -174,3 +175,36 @@ class PING:
         end_time = time.time()
 
         return all_measurement_ids, start_time, end_time
+
+
+class TRACEROUTE:
+    def __init__(
+        self,
+        ripe_credentials: dict,
+    ) -> None:
+        self.account = ripe_credentials["username"]
+        self.key = ripe_credentials["key"]
+        self.driver = RIPEAtlas(self.account, self.key)
+
+    def traceroute(self, target, probe_id):
+        description = "Geoloc project"
+        tags = ["traceroute", "test", "geoloc"]
+        is_public = True
+        probes = {
+            "value": str(probe_id),
+            "type": "probes",
+            "requested": 1
+        }
+        packets = 3
+        protocol = "ICMP"
+        options = (self.key, description,
+                   tags, is_public, packets, protocol)
+
+        response = self.driver.traceroute_measurement(target, probes, options)
+
+        if "measurements" in response and len(response["measurements"]) == 1:
+            return response["measurements"][0]
+        else:
+            print(f"Failed to traceroute")
+            pprint(response)
+            return None

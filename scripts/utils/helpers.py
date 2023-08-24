@@ -102,69 +102,6 @@ def get_points_on_circle(lat_c, lon_c, r_c, nb_points: int = 4):
     return circle_points
 
 
-def circle_intersections1(circles, speed_threshold=None):
-    """
-    Check out this link for more details about the maths:
-    https://gis.stackexchange.com/questions/48937/calculating-intersection-of-two-circles
-    """
-    intersect_points = []
-
-    circles = circle_preprocessing(circles, speed_threshold=speed_threshold)
-
-    if len(circles) <= 2:
-        if len(circles) == 1:
-            single_circle = list(circles)[0]
-            lat, lon, rtt, d, r = single_circle
-            filtered_points = get_points_on_circle(lat, lon, d)
-            return filtered_points
-
-    for c_1, c_2 in itertools.combinations(circles, 2):
-        lat_1, lon_1, rtt_1, d_1, r_1 = c_1
-        lat_2, lon_2, rtt_2, d_2, r_2 = c_2
-
-        x1 = np.array(list(geo_to_cartesian(lat_1, lon_1)))
-        x2 = np.array(list(geo_to_cartesian(lat_2, lon_2)))
-
-        q = np.dot(x1, x2)
-
-        a = (np.cos(r_1) - np.cos(r_2) * q) / (1 - (q**2))
-        b = (np.cos(r_2) - np.cos(r_1) * q) / (1 - (q**2))
-
-        x0 = a * x1 + b * x2
-
-        n = np.cross(x1, x2)
-        if (1 - np.dot(x0, x0)) / np.dot(n, n) <= 0:
-            # print("ANYCAST???", (lat_1, lon_1, rtt_1, d_1), (lat_2, lon_2, rtt_2, d_2))
-            continue
-
-        t = np.sqrt((1 - np.dot(x0, x0)) / np.dot(n, n))
-
-        i1 = x0 + t * n
-        i2 = x0 - t * n
-
-        i_lon_1 = np.arctan2(i1[1], i1[0]) * (180 / np.pi)
-        i_lat_1 = np.arctan(i1[2] / np.sqrt((i1[0] ** 2) + (i1[1] ** 2))) / (
-            np.pi / 180
-        )
-        intersect_points.append((i_lat_1, i_lon_1))
-
-        i_lon_2 = np.arctan2(i2[1], i2[0]) * (180 / np.pi)
-        i_lat_2 = np.arctan(i2[2] / np.sqrt((i2[0] ** 2) + (i2[1] ** 2))) / (
-            np.pi / 180
-        )
-        intersect_points.append((i_lat_2, i_lon_2))
-
-    filtred_points = []
-    for point_geo in intersect_points:
-        for lat_c, long_c, rtt_c, d_c, r_c in circles:
-            if not is_within_cirle((lat_c, long_c), rtt_c, point_geo, speed_threshold):
-                break
-        else:
-            filtred_points.append(point_geo)
-
-    return filtred_points
-
-
 def circle_intersections(circles, speed_threshold=None):
     """
     Check out this link for more details about the maths:
@@ -314,48 +251,6 @@ def get_closest_vp(measurement_set: dict) -> tuple:
     return closest_vp
 
 
-def select_best_guess_centroid1(measurement_results: dict, vp_dataset: dict) -> tuple:
-    """
-    Find the best guess
-    that is the location of the vantage point closest to the centroid.
-    """
-    probe_circles = {}
-    for vp_addr, result in measurement_results.items():
-        try:
-            lat = vp_dataset[vp_addr]["latitude"]
-            lon = vp_dataset[vp_addr]["longitude"]
-            min_rtt = result["min_rtt"]
-        except KeyError:
-            continue
-
-        if isinstance(min_rtt, float):
-            probe_circles[vp_addr] = (
-                lat,
-                lon,
-                min_rtt,
-                None,
-                None,
-            )
-
-    circles = list(probe_circles.values())
-    intersections = circle_intersections(circles, speed_threshold=2 / 3)
-
-    centroid = None
-    if len(intersections) > 2:
-        centroid = polygon_centroid(intersections)
-    elif len(intersections) == 2:
-        # only two circles intersection, centroid is middle of the segment
-        centroid = get_middle_intersection(intersections)
-    else:
-        closest_vp = get_closest_vp(measurement_results)
-        centroid = (
-            vp_dataset[closest_vp]["latitude"],
-            vp_dataset[closest_vp]["longitude"],
-        )
-
-    return intersections, centroid
-
-
 def select_best_guess_centroid(target_ip, vp_coordinates_per_ip, rtt_per_vp_to_target):
     """
     Find the best guess
@@ -406,7 +301,7 @@ def select_best_guess_centroid(target_ip, vp_coordinates_per_ip, rtt_per_vp_to_t
 
 
 def get_center_of_poly(circles, speed):
-    points = circle_intersections(circles, speed)
+    points, circles = circle_intersections(circles, speed)
     if len(points) == 0:
         return None, None
     return polygon_centroid(points)
@@ -414,7 +309,7 @@ def get_center_of_poly(circles, speed):
 
 def get_points_in_poly(circles, rot, rad, speed, old_circles=[]):
     circles = circle_preprocessing(circles, speed_threshold=speed)
-    points = circle_intersections(circles, speed)
+    points, circles = circle_intersections(circles, speed)
     if len(points) == 0:
         return []
     else:

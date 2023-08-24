@@ -14,6 +14,7 @@ ANCHORS_MESHED_PING_TABLE = f"anchors_meshed_pings"
 PROBES_TO_ANCHORS_PING_TABLE = f"ping_10k_to_anchors"
 ANCHORS_TO_PREFIX_TABLE = f"anchors_to_prefix_pings"
 PROBES_TO_PREFIX_TABLE = f"probes_to_prefix_pings"
+TARGET_TO_LANDMARKS_PING_TABLE = f"targets_to_landmarks_pings"
 
 
 # RIPE atlas credentials
@@ -71,32 +72,32 @@ GEOPAPIFY_2_FILE: Path = VARIOUS_PATH / \
     "geocoded_by_geoapify-10_05_2023_500_last.csv"
 IP_TO_ASN_FILE: Path = VARIOUS_PATH / "2022-03-28.dat"
 ANCHORS_SECOND_PAPER_FILE: Path = VARIOUS_PATH / "anchors_ip_list.json"
+CACHED_WEBSITES_FILE: Path = VARIOUS_PATH / 'websites.json'
 
 
 # Measurements paths
 MEASUREMENTS_MILLION_SCALE_PATH: Path = DEFAULT_DIR / \
-    "datasets/measurements/million_scale/"
+    "measurements/million_scale_results/"
 MEASUREMENTS_STREET_LEVEL_PATH: Path = DEFAULT_DIR / \
-    "datasets/measurements/street_level/"
+    "measurements/street_level_results/"
 MEASUREMENT_CONFIG_PATH: Path = DEFAULT_DIR / \
-    "datasets/million_scale/measurement_config/"
+    "measurements/million_scale_results/measurement_config/"
 
 # Million scale files
-TARGET_ANCHOR_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
-    "target_anchor_vp_test.json"
-TARGET_PROBE_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_probe_vp_test.json"
-PREFIX_ANCHOR_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
-    "prefix_anchor_vp_test.json"
-PREFIX_PROBE_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "prefix_probe_vp_test.json"
-TARGET_ALL_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_all_vp_test.json"
+TARGET_ANCHOR: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
+    "target_ANCHOR.json"
+TARGET_PROBE: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_PROBE.json"
+PREFIX_ANCHOR: Path = MEASUREMENTS_MILLION_SCALE_PATH / \
+    "prefix_ANCHOR.json"
+PREFIX_PROBE: Path = MEASUREMENTS_MILLION_SCALE_PATH / "prefix_PROBE.json"
+TARGET_ALL_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_all_vp.json"
 
 # Street level file
-BASIC_ANALYSABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
-FINAL_ANALYSABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "final_all_res.json"
+ANALYZABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
 
 
 # Analysis path
-ANALYSIS_PATH: Path = DEFAULT_DIR / "datasets/analysis/"
+ANALYSIS_PATH: Path = DEFAULT_DIR / "analysis/results"
 
 # files
 PROBES_TO_ANCHORS_RESULT_FILE: Path = ANALYSIS_PATH / \
@@ -127,14 +128,5 @@ CBG_THRESHOLD_VP_SELECTION_FILE: Path = PDF_PATH / \
     "cbg_thresholds_vp_selection.pdf"
 CBG_THRESHOLD_CONTINENT_FILE: Path = PDF_PATH / "cbg_thresholds_continent.pdf"
 ROUND_ALGORITHM_ERROR_FILE: Path = PDF_PATH / "round_algorithm_error.pdf"
-CLOSE_LANDMARK_FILE: Path = PDF_PATH / "cdf_close_landmark_check.pdf"
-CLOSE_LANDMARK_LOG_FILE: Path = PDF_PATH / \
+CLOSE_LANDMARK_FILE: Path = PDF_PATH / \
     "cdf_close_landmark_check_log.pdf"
-CLOSE_LANDMARK_FILE_2: Path = PDF_PATH / "cdf_close_landmark_check_2.pdf"
-CLOSE_LANDMARK_LOG_FILE_2: Path = PDF_PATH / \
-    "cdf_close_landmark_check_2_log.pdf"
-
-
-# Omar à régler
-CACHED_WEBSITES_FILE: Path = 'websites.json'
-TMP_GEOLOC_INFO_ONE_TARGET_FILE: Path = 'all_info_geoloc.json'

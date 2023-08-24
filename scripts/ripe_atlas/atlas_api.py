@@ -3,6 +3,7 @@ import json
 import logging
 import time
 import requests
+import ipaddress
 
 from collections import defaultdict, OrderedDict
 
@@ -63,8 +64,104 @@ class RIPEAtlas(object):
         except (IndexError, KeyError):
             return
 
+    def traceroute_measurement(self, target, probes_selector, options):
+
+        ripe_key, description, tags, is_public, packets, protocol = options
+
+        core_parameters = {
+            "target": target,
+            "af": 4,
+            "description": description,
+            "resolve_on_probe": False,
+            "type": "traceroute",
+            "tags": tags,
+            "is_public": is_public,
+        }
+
+        traceroute_parameters = {
+            "packets": packets,
+            "protocol": protocol,
+        }
+
+        parameters = {}
+        parameters.update(core_parameters)
+        parameters.update(traceroute_parameters)
+
+        definitions = [parameters]
+
+        response = requests.post(
+            f"https://atlas.ripe.net/api/v2/measurements/?key={ripe_key}",
+            json={
+                "definitions": definitions,
+                "probes": [probes_selector],
+                "is_oneoff": True,
+                "bill_to": self.account,
+            },
+        ).json()
+        return response
+
     def __str__(self):
         return "RIPE Atlas"
+
+
+def ripe_traceroute_to_csv(traceroute):
+
+    protocols = {"ICMP": 1, "TCP": 6, "UDP": 17}
+    rows = []
+    try:
+        src_addr = traceroute["from"]
+        dst_addr = traceroute["dst_addr"]
+        af = traceroute["af"]
+        if af == 4:
+            dst_prefix = ".".join(dst_addr.split(".")[:3] + ["0"])
+        elif af == 6:
+            dst_prefix = str(ipaddress.ip_network(
+                dst_addr + "/48", strict=False).network_address)
+    except (KeyError, ValueError):
+        return rows
+
+    for hop in traceroute["result"]:
+        for response in hop.get("result", []):
+            if not response or response.get("error"):
+                continue
+            if response.get("x") == "*" or not response.get("rtt"):
+                response["from"] = "*"
+                response["rtt"] = 0
+                response["ttl"] = 0
+            proto = protocols[traceroute["proto"]]
+            try:
+                row = (src_addr, dst_prefix, dst_addr, response["from"], proto,
+                       hop["hop"], response["rtt"], response["ttl"], traceroute["prb_id"], traceroute["msm_id"], traceroute["timestamp"])
+                row_str = "".join(f",{x}" for x in row)[1:]
+                rows.append(row_str)
+            except Exception:
+                print("ERROR", response)
+
+    return rows
+
+
+def fetch_traceroutes_from_measurement_ids_no_csv(measurement_ids, start=None, stop=None):
+    res = []
+    for measurement_id in measurement_ids:
+        result_url = f'https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/?'
+        if start:
+            result_url += f"start={start}"
+        if stop:
+            result_url += f"&stop={stop}"
+        # print(result_url)
+        traceroutes = requests.get(result_url).json()
+        # if len(traceroutes) == 0:
+        #    print(f"No results found for {measurement_id}")
+        if "error" in traceroutes:
+            print(traceroutes)
+            continue
+        for traceroute in traceroutes:
+            # if traceroute["af"] != 4:
+            #     continue
+            rows = ripe_traceroute_to_csv(traceroute)
+            for row in rows:
+                res.append(row)
+    return res
 
 
 def wait_for(measurement_id: str, max_retry: int = 30) -> None:
@@ -246,7 +343,7 @@ def get_atlas_probes() -> list:
                 "address_v4": probe["address_v4"],
                 "asn_v4": probe["asn_v4"],
                 "country_code": probe["country_code"],
-                "geometry": probe["geometry"]
+                "geometry": probe["geometry"],
             }
             probes.append(reduced_probe)
 
@@ -278,7 +375,8 @@ def get_atlas_anchors() -> list:
                 "address_v4": anchor["address_v4"],
                 "asn_v4": anchor["asn_v4"],
                 "country_code": anchor["country_code"],
-                "geometry": anchor["geometry"]
+                "geometry": anchor["geometry"],
+                "id": anchor["id"],
             }
             anchors.append(reduced_anchor)
 

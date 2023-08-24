@@ -6,7 +6,6 @@ __pycache__/
 *.fsdb
 *.txt
 *.pdf
-*.png
 *.csv
 *.dat
 *.tif

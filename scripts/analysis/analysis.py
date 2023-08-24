@@ -3,9 +3,10 @@ import numpy as np
 
 from multiprocessing.pool import Pool
 from clickhouse_driver import Client
+from ipaddress import ip_network
 
 from scripts.utils.file_utils import load_json
-from scripts.utils.helpers import haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections
+from scripts.utils.helpers import haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections, circle_preprocessing
 from scripts.utils.clickhouse_utils import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
 from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST
@@ -98,8 +99,7 @@ def compute_geolocation_features_per_ip(rtt_per_srcs_dst, vp_coordinates_per_ip,
                      threshold_distances,
                      distance_operator, max_vps, is_use_prefix))
     if is_multiprocess:
-        # with Pool(24) as p:
-        with Pool(4) as p:
+        with Pool(24) as p:
             features_all_process = p.starmap(
                 compute_geolocation_features_per_ip_impl, args[:])
             for features_process in features_all_process:
@@ -221,7 +221,7 @@ def compute_geo_info(probes, serialized_file):
 def compute_error(dst, vp_coordinates_per_ip, rtt_per_src):
     error = None
     circles = []
-    guessed_geolocation_circles = select_best_guess_centroid(
+    centroid, guessed_geolocation_circles = select_best_guess_centroid(
         dst, vp_coordinates_per_ip, rtt_per_src)
     if guessed_geolocation_circles is not None:
         guessed_geolocation, circles = guessed_geolocation_circles
@@ -319,7 +319,7 @@ def round_based_algorithm_impl(dst, rtt_per_src, vp_coordinates_per_ip, vps_per_
     # Only take the first n_vps
     vp_coordinates_per_ip_allowed = {x: vp_coordinates_per_ip[x] for x in vp_coordinates_per_ip if
                                      x in vps_per_target_greedy}
-    guessed_geolocation_circles = select_best_guess_centroid(
+    centroid, guessed_geolocation_circles = select_best_guess_centroid(
         dst, vp_coordinates_per_ip_allowed, rtt_per_src)
     if guessed_geolocation_circles is None:
         return dst, None, None
@@ -453,7 +453,7 @@ def every_tier_result(data):
             res['lon4'] = res['lon1']
         return res
 
-    points = circle_intersections(
+    points, circle = circle_intersections(
         data['tier2:final_circles'], data['speed_threshold'])
     if len(points) > 0:
         lat, lon = polygon_centroid(points)
@@ -496,3 +496,40 @@ def every_tier_result_and_errors(data):
     res['error4'] = haversine(
         (res['lat4'], res['lon4']), (data['lat_c'], data['lon_c']))
     return res
+
+
+def local_circle_preprocessing(circles, speed_threshold=None):
+    res_circles = []
+    min_rtt = 5000
+    for circle in circles:
+        min_rtt = min(min_rtt, circle[2])
+
+    for circle in circles:
+        if circle[2] < min_rtt * 5:
+            res_circles.append(circle)
+
+    return circle_preprocessing(res_circles, speed_threshold)
+
+
+def get_all_bgp_prefixes():
+    client = Client('127.0.0.1')
+    db_table = client.execute(
+        f'select distinct prefix from bgp_interdomain_te.IPv4_3238002744')
+    res = {}
+    for line in db_table:
+        pref = line[0]
+        if "." in pref:
+            res[pref] = 1
+    return res
+
+
+def is_same_bgp_prefix(ip1, ip2, prefixes):
+    for i in range(8, 25):
+        n1 = ip_network(ip1+f"/{i}", strict=False).network_address
+        n2 = ip_network(ip2+f"/{i}", strict=False).network_address
+        if n1 == n2:
+            if f"{str(n1)}/{i}" in prefixes:
+                return True
+        else:
+            break
+    return False

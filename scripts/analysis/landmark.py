@@ -1,17 +1,16 @@
 import requests
-import json
 import overpy
 import dns
 import dns.resolver
 import urllib3
-# import pyasn
+import pyasn
 import warnings
 
-from pprint import pprint
 from multiprocessing import Pool
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from geopy import Point, distance
 
+from scripts.utils.file_utils import load_json, dump_json
 from default import CACHED_WEBSITES_FILE, IP_TO_ASN_FILE
 
 
@@ -68,7 +67,7 @@ def check_and_get_website_ip(website, protocol):
             '60068', '136620', '395354',
             '32934']
     res = {}
-    asndb = pyasn.pyasn(IP_TO_ASN_FILE)
+    asndb = pyasn.pyasn("2022-03-28.dat")
     try:
         result = dns.resolver.resolve(website)
     except Exception:
@@ -107,16 +106,6 @@ def get_one_website_ip(domain, protocol, lat, lon):
     ip_info['lat'] = lat
     ip_info['lon'] = lon
     return ip_info
-
-
-def get_all_website_ips(landmarks, tmp_save=False):
-    res = []
-    with Pool() as pool:
-        results = pool.starmap(get_one_website_ip, landmarks)
-        for result in results:
-            if result != None:
-                res.append(result)
-    return res
 
 
 def get_landmarks_with_website_from_lat_lon(lat_arg, lon_arg):
@@ -161,66 +150,6 @@ def get_landmarks_with_website_from_lat_lon(lat_arg, lon_arg):
     return res
 
 
-def get_landmarks_with_website_in_area(area_name, postcode):
-    # api = overpy.Overpass()
-    # api = overpy.Overpass(url="https://overpass.kumi.systems/api/interpreter")
-    api = overpy.Overpass(
-        url="https://maps.mail.ru/osm/tools/overpass/api/interpreter")
-    query = f"""
-        [out:json];
-        area[name="{area_name}"]->.small;
-        (
-            node
-                [website]
-                ["addr:postcode"="{postcode}"]
-                (area.small);
-            way
-                [website]
-                ["addr:postcode"="{postcode}"]
-                (area.small);
-        );
-        out;
-    """
-    result = api.query(query)
-    res = []
-    for node in result.nodes:
-        lat = float(node.lat)
-        lon = float(node.lon)
-        tags = node.tags
-        website = tags['website']
-        res.append((website, lat, lon, tags))
-    for way in result.ways:
-        try:
-            tmp_lat = 0
-            tmp_lon = 0
-            nodes = way.get_nodes(resolve_missing=True)
-            for node in nodes:
-                tmp_lat += float(node.lat)
-                tmp_lon += float(node.lon)
-            lat = tmp_lat/len(nodes)
-            lon = tmp_lon/len(nodes)
-            tags = way.tags
-            website = tags['website']
-            res.append((website, lat, lon))
-        except:
-            continue
-    return res
-
-
-def get_all_landmarks(area_lst, tmp_save=False):
-    args = []
-    for x in area_lst:
-        args.append((x[0], x[1]))
-    all_landmarks = []
-    with Pool(8) as pool:
-        results = pool.starmap(get_landmarks_with_website_in_area, args)
-        for point_res in results:
-            if point_res != None:
-                for result in point_res:
-                    all_landmarks.append(result)
-    return all_landmarks
-
-
 def get_all_landmarks_and_stats_from_points(points):
     dict_website = {}
     print(f"{len(points)} Points to look for")
@@ -253,10 +182,16 @@ def get_all_landmarks_and_stats_from_points(points):
     failed_header_test_count = 0
     landmarks = []
 
-    with open(CACHED_WEBSITES_FILE) as json_file:
-        all_websites = json.load(json_file)
+    try:
+        all_websites = load_json(CACHED_WEBSITES_FILE)
+    except FileNotFoundError:
+        all_websites = {}
 
     for k, v in unique_website.items():
+        # fix websites
+        if 'google' in k or 'facebook' in k or 'amazon' in k or 'microsoft' in k or 'azure' in k or 'akamai' in k or 'cdn' in k:
+            all_websites[k]['cdn'] = True
+
         if k[0] not in all_websites:
             args.append((k[0], k[1], v[1], v[2]))
         else:
@@ -296,80 +231,6 @@ def get_all_landmarks_and_stats_from_points(points):
             landmarks.append(
                 (result['ip'], result['domain'], result['lat'], result['lon']))
 
-    with open(CACHED_WEBSITES_FILE, 'w') as outfile:
-        json.dump(all_websites, outfile)
+    dump_json(all_websites, CACHED_WEBSITES_FILE)
 
     return failed_dns_count, failed_asn_count, cdn_count, failed_header_test_count, landmarks
-
-
-def fix_websites():
-    with open(CACHED_WEBSITES_FILE) as json_file:
-        all_websites = json.load(json_file)
-    for k, v in all_websites.items():
-        if 'google' in k or 'facebook' in k or 'amazon' in k or 'microsoft' in k or 'azure' in k or 'akamai' in k or 'cdn' in k:
-            all_websites[k]['cdn'] = True
-
-    with open(CACHED_WEBSITES_FILE, 'w') as outfile:
-        json.dump(all_websites, outfile)
-
-
-def filter_websites(all_landmarks):
-    dict_res = {}
-    for info in all_landmarks:
-        url = info[0]
-        if "://" in url:
-            protocol = url.split("://")[0]
-            domain_name = url.split("://")[1]
-        else:
-            protocol = "http"
-            domain_name = url
-        website = domain_name.split("/")[0]
-        if (website, protocol) not in dict_res:
-            dict_res[(website, protocol)] = info
-    res = []
-    for k, v in dict_res.items():
-        res.append((k[0], k[1], v[1], v[2]))
-    return res
-
-
-def get_zipcodes_for_points(points, tmp_save=False):
-    print(f"{len(points)} zipcodes to look for")
-    zipcodes = []
-    res = []
-    for point in points:
-        url = f"https://nominatim.openstreetmap.org/reverse?format=geojson&lat={point[0]}&lon={point[1]}"
-        r = requests.get(url)
-        elem = r.json()
-        if 'features' not in elem or len(elem['features']) != 1:
-            continue
-        info = elem['features'][0]
-        if 'properties' not in info or 'address' not in info['properties']:
-            continue
-        address = info['properties']['address']
-        if 'postcode' not in address:
-            # pprint(address)
-            postcode = None
-        else:
-            postcode = address['postcode']
-        if 'city' in address:
-            area_name = address['city']
-        elif 'city_district' in address:
-            area_name = address['city_district']
-        elif 'town' in address:
-            area_name = address['town']
-        elif 'village' in address:
-            area_name = address['village']
-        elif 'suburb' in address:
-            area_name = address['suburb']
-        elif 'state' in address:
-            area_name = address['state']
-        else:
-            area_name = None
-        if area_name != None and postcode != None:
-            res.append((area_name, postcode))
-        zipcodes.append(elem)
-    return res
-
-
-# if __name__ == '__main__':
-    # fix_websites()
