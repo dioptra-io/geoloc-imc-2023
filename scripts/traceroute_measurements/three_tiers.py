@@ -1,7 +1,7 @@
 import time
 
 from scripts.analysis.analysis import local_circle_preprocessing
-from scripts.analysis.landmark import get_all_landmarks_and_stats_from_points
+from scripts.traceroute_measurements.landmark import get_all_landmarks_and_stats_from_points
 from scripts.utils.helpers import get_center_of_poly, get_points_in_poly
 from scripts.traceroute_measurements.traceroutes import get_circles_to_target, start_and_get_traceroutes
 

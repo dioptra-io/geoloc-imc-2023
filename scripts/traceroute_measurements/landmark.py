@@ -67,7 +67,7 @@ def check_and_get_website_ip(website, protocol):
             '60068', '136620', '395354',
             '32934']
     res = {}
-    asndb = pyasn.pyasn("2022-03-28.dat")
+    asndb = pyasn.pyasn(IP_TO_ASN_FILE)
     try:
         result = dns.resolver.resolve(website)
     except Exception:

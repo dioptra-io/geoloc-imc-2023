@@ -224,3 +224,39 @@ def plot_circles_and_points(circles, points, speed_threshold=4/9):
 
     df = pd.concat(frames, ignore_index=True)
     plot_dots_from_df(df)
+
+
+def plot_scatter_multiple(Xs, Ys, xmin, xmax, ymin, ymax, xscale, yscale, xlabel, ylabel,
+                          markers, marker_colors, marker_size):
+    fig, ax = plt.subplots()
+
+    # ax.set_xlabel(title, fontsize=fontsize_axis)
+    # plt.title("CDF", fontsize=fontsize_axis)
+
+    # x_ticks = [inf_born]
+    # x_ticks.extend(np.arange(inf_born, sup_born, xtick_interval))
+    # ax.set_xticks(x_ticks)
+    # xtickNames = plt.setp(ax, xticklabels=["{0:.1f}".format(r) for r in x_ticks])
+    # ax.set_xticklabels(xtickNames, rotation=45)
+    # ax.set_xticklabels(xtickNames)
+
+    ax.grid(linestyle="dotted")
+    ax.set_xlabel(xlabel, fontsize=fontsize_axis)
+    ax.set_ylabel(ylabel, fontsize=fontsize_axis)
+
+    for i in range(0, len(Xs)):
+        X = Xs[i]
+        Y = Ys[i]
+
+        # , markersize=10, markeredgewidth=2)
+        ax.scatter(X, Y, c=marker_colors[i],
+                   marker=markers[i], s=marker_size[i])
+        # ax.plot(X, Y)
+        # patches[0].set_xy(patches[0].get_xy()[:-1])
+    ax.set_xscale(xscale)
+    ax.set_yscale(yscale)
+
+    ax.set_xlim(left=xmin, right=xmax)
+    ax.set_ylim(bottom=ymin, top=ymax)
+
+    return fig, ax

@@ -221,7 +221,7 @@ def compute_geo_info(probes, serialized_file):
 def compute_error(dst, vp_coordinates_per_ip, rtt_per_src):
     error = None
     circles = []
-    centroid, guessed_geolocation_circles = select_best_guess_centroid(
+    guessed_geolocation_circles = select_best_guess_centroid(
         dst, vp_coordinates_per_ip, rtt_per_src)
     if guessed_geolocation_circles is not None:
         guessed_geolocation, circles = guessed_geolocation_circles
@@ -319,7 +319,7 @@ def round_based_algorithm_impl(dst, rtt_per_src, vp_coordinates_per_ip, vps_per_
     # Only take the first n_vps
     vp_coordinates_per_ip_allowed = {x: vp_coordinates_per_ip[x] for x in vp_coordinates_per_ip if
                                      x in vps_per_target_greedy}
-    centroid, guessed_geolocation_circles = select_best_guess_centroid(
+    guessed_geolocation_circles = select_best_guess_centroid(
         dst, vp_coordinates_per_ip_allowed, rtt_per_src)
     if guessed_geolocation_circles is None:
         return dst, None, None
@@ -386,7 +386,8 @@ def round_based_algorithm(greedy_probes, rtt_per_srcs_dst, vp_coordinates_per_ip
             continue
         args.append((dst, rtt_per_src, vp_coordinates_per_ip,
                     vps_per_target_greedy, asn_per_vp, threshold))
-    with Pool(24) as p:
+    with Pool(4) as p:
+        # with Pool(24) as p:
         results = p.starmap(round_based_algorithm_impl, args)
         return results
 
