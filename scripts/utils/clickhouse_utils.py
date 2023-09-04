@@ -1,3 +1,8 @@
+# Functions to query a clickhouse database
+
+# the filter contains all the invalid probes that sould not be considerer.
+# the treshold is the maximal rtt allowed.
+
 def get_min_rtt_per_src_dst_query_ping_table(database, table, filter=None, threshold=10000):
     query = (
         f"WITH  arrayMin(groupArray(`min`)) as min_rtt "

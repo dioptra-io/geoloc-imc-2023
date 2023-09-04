@@ -1,19 +1,16 @@
+# One function per tier of the street level method.
+
 import time
 
 from scripts.analysis.analysis import local_circle_preprocessing
-from scripts.traceroute_measurements.landmark import get_all_landmarks_and_stats_from_points
+from scripts.street_level.landmark import get_all_landmarks_and_stats_from_points
 from scripts.utils.helpers import get_center_of_poly, get_points_in_poly
-from scripts.traceroute_measurements.traceroutes import get_circles_to_target, start_and_get_traceroutes
-
-
-from scripts.utils.file_utils import load_json
+from scripts.street_level.traceroutes_results import get_circles_to_target, start_and_get_traceroutes
 
 
 def tier_1(target_ip, res):
     st = time.time()
-    circles_file = load_json("circles.json")
-    # all_circles = get_circles_to_target(target_ip)
-    all_circles = circles_file[target_ip]
+    all_circles = get_circles_to_target(target_ip)
     speed_threshold = 4/9
     imp_circles = local_circle_preprocessing(
         all_circles, speed_threshold=speed_threshold)
