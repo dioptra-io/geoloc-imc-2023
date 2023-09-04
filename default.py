@@ -1,3 +1,5 @@
+# All the reference paths to storing files are here. There are also some constants and information for the clickhouse database and Ripe Atlas API.
+
 from pathlib import Path
 
 
@@ -18,9 +20,12 @@ TARGET_TO_LANDMARKS_PING_TABLE = f"targets_to_landmarks_pings"
 
 
 # RIPE atlas credentials
+# Enter your RIPE ATLAS credentials below
+# username: email address
+# key: password
 RIPE_CREDENTIALS = {
-    "username": "timur.friedman@sorbonne-universite.fr",
-    "key": "b3d3d4fc-724e-4505-befe-1ad16a70dc87",
+    "username": "",
+    "key": "",
 }
 
 
@@ -71,8 +76,11 @@ ADDRESS_FILE: Path = (
 GEOLITE_FILE: Path = VARIOUS_PATH / "GeoLite2-City-Blocks-IPv4_20230516.tree"
 IP_INFO_GEO_FILE: Path = VARIOUS_PATH / "ip_info_geo_anchors.json"
 MAXMIND_GEO_FILE: Path = VARIOUS_PATH / "maxmind_free_geo_anchors.json"
+<<<<<<< HEAD
 GEOPAPIFY_1_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_0_500.csv"
 GEOPAPIFY_2_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_500_last.csv"
+=======
+>>>>>>> 584214ace8edd8b3313137d19e6e697e8e900afb
 IP_TO_ASN_FILE: Path = VARIOUS_PATH / "2022-03-28.dat"
 ANCHORS_SECOND_PAPER_FILE: Path = VARIOUS_PATH / "anchors_ip_list.json"
 CACHED_WEBSITES_FILE: Path = VARIOUS_PATH / "websites.json"
@@ -128,8 +136,8 @@ PDF_PATH: Path = DEFAULT_DIR / "plot/pdf/"
 
 # files
 GEO_DATABASE_FILE: Path = PDF_PATH / "geo_databases.pdf"
-FIG_3A_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes_3a.pdf"
-FIG_3B_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes_3b.pdf"
+ACCURACY_VS_NB_VPS_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes.pdf"
+ACCURACY_VS_SUBSET_SIZES_FILE: Path = PDF_PATH / "accuracy_vs_subset_sizes.pdf"
 CBG_THRESHOLD_PROBES_FILE: Path = PDF_PATH / "cbg_thresholds_probes.pdf"
 CBG_THRESHOLD_VP_SELECTION_FILE: Path = PDF_PATH / "cbg_thresholds_vp_selection.pdf"
 CBG_THRESHOLD_CONTINENT_FILE: Path = PDF_PATH / "cbg_thresholds_continent.pdf"

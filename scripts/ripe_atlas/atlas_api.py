@@ -1,4 +1,5 @@
-"""all functions to query RIPE Atlas API"""
+# All functions to query RIPE Atlas API
+
 import json
 import logging
 import time
@@ -6,6 +7,8 @@ import requests
 import ipaddress
 
 from collections import defaultdict, OrderedDict
+from ipaddress import IPv4Network
+from random import randint
 
 
 class RIPEAtlas(object):
@@ -148,16 +151,11 @@ def fetch_traceroutes_from_measurement_ids_no_csv(measurement_ids, start=None, s
             result_url += f"start={start}"
         if stop:
             result_url += f"&stop={stop}"
-        # print(result_url)
         traceroutes = requests.get(result_url).json()
-        # if len(traceroutes) == 0:
-        #    print(f"No results found for {measurement_id}")
         if "error" in traceroutes:
             print(traceroutes)
             continue
         for traceroute in traceroutes:
-            # if traceroute["af"] != 4:
-            #     continue
             rows = ripe_traceroute_to_csv(traceroute)
             for row in rows:
                 res.append(row)
@@ -185,6 +183,31 @@ def get_prefix_from_ip(addr):
     prefix.append("0")
     prefix = ".".join(prefix)
     return prefix
+
+
+def get_target_hitlist(target_prefix, nb_targets, targets_per_prefix):
+    """from ip, return a list of target ips"""
+    target_addr_list = []
+    try:
+        target_addr_list = targets_per_prefix[target_prefix]
+    except KeyError:
+        pass
+
+    target_addr_list = list(set(target_addr_list))
+
+    if len(target_addr_list) < nb_targets:
+        prefix = IPv4Network(target_prefix + "/24")
+        target_addr_list.extend(
+            [
+                str(prefix[randint(1, 254)])
+                for _ in range(0, nb_targets - len(target_addr_list))
+            ]
+        )
+
+    if len(target_addr_list) > nb_targets:
+        target_addr_list = target_addr_list[:nb_targets]
+
+    return target_addr_list
 
 
 def is_geoloc_disputed(probe: dict) -> bool:

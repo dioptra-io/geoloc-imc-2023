@@ -1,3 +1,5 @@
+# Do the landmark selection step as explained in the street level paper
+
 import requests
 import overpy
 import dns

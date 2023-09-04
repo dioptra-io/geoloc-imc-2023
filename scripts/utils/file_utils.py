@@ -1,3 +1,7 @@
+# Functions to load and save data into a json format.
+
+# All the paths are given in default.py file.
+
 import ujson as json
 
 

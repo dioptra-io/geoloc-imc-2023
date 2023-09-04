@@ -1,9 +1,11 @@
+# Intermediate functions during street level traceroutes process
+
 import time
 
 from clickhouse_driver import Client
 
 from scripts.utils.file_utils import load_json
-from scripts.ripe_atlas.ping_and_traceroute import TRACEROUTE
+from scripts.ripe_atlas.ping_and_traceroute_classes import TRACEROUTE
 from scripts.ripe_atlas.atlas_api import fetch_traceroutes_from_measurement_ids_no_csv
 from default import ANCHORS_FILE, RIPE_CREDENTIALS
 
@@ -56,7 +58,7 @@ def get_circles_to_target(target_ip):
     return res
 
 
-def start_tracerouts_to_landmarks(landmarks, probes):
+def start_traceroutes_to_landmarks(landmarks, probes):
     results_to_get = []
     for landmark in landmarks:
         landmark_ip = landmark[0]
@@ -107,53 +109,6 @@ def get_rtt_diff(probe_ip, target_ip, landmark_ip):
     return target_rtt + landmark_rtt - best_rtt - best_rtt, best_ip
 
 
-def get_rtt_diff_id(probe_ip, target_ip, landmark_ip):
-    print(probe_ip)
-    print(target_ip)
-    print(landmark_ip)
-    client = Client('127.0.0.1')
-    rtt_dict_target = {}
-    rtt_dict_landmark = {}
-    res = client.execute(
-        f'select resp_addr, dst_addr, rtt, msm_id from bgp_interdomain_te.street_lvl_traceroutes where src_addr = \'{probe_ip}\' and (dst_addr =  \'{target_ip}\' or dst_addr = \'{landmark_ip}\')')
-    traceroute_id = None
-    for l in res:
-        if l[1] == landmark_ip:
-            traceroute_id = l[3]
-    if traceroute_id == None:
-        return -1, None, None
-
-    for l in res:
-        resp_ip = l[0]
-        dst_ip = l[1]
-        rtt = l[2]
-        if dst_ip == target_ip:
-            if resp_ip not in rtt_dict_target:
-                rtt_dict_target[resp_ip] = rtt
-            if rtt < rtt_dict_target[resp_ip]:
-                rtt_dict_target[resp_ip] = rtt
-        elif dst_ip == landmark_ip:
-            if resp_ip not in rtt_dict_landmark:
-                rtt_dict_landmark[resp_ip] = rtt
-            if rtt < rtt_dict_landmark[resp_ip]:
-                rtt_dict_landmark[resp_ip] = rtt
-    if target_ip not in rtt_dict_target or landmark_ip not in rtt_dict_landmark:
-        return -1, None, traceroute_id
-    target_rtt = rtt_dict_target[target_ip]
-    landmark_rtt = rtt_dict_landmark[landmark_ip]
-    same_dict = {}
-    for ip in rtt_dict_target:
-        if ip in rtt_dict_landmark:
-            same_dict[ip] = min(rtt_dict_landmark[ip], rtt_dict_target[ip])
-    best_rtt = 0
-    best_ip = None
-    for k, v in same_dict.items():
-        if v > best_rtt:
-            best_rtt = v
-            best_ip = k
-    return target_rtt + landmark_rtt - best_rtt - best_rtt, best_ip, traceroute_id
-
-
 def get_traceroutes_results(traceroute_ids):
     next_to_do = []
     for id in traceroute_ids:
@@ -193,7 +148,7 @@ def get_traceroutes_results(traceroute_ids):
 
 def start_and_get_traceroutes(target_ip, vps, landmarks):
     probes = get_probes_to_use_for_circles(vps)
-    tmp_res_traceroutes = start_tracerouts_to_landmarks(landmarks, probes)
+    tmp_res_traceroutes = start_traceroutes_to_landmarks(landmarks, probes)
     print(f"{len(tmp_res_traceroutes)} traceroute done")
 
     traceroute_ids = []

@@ -1,3 +1,5 @@
+# Mathematical functions helpful for geolocation problems
+
 import itertools
 import numpy as np
 
@@ -237,18 +239,6 @@ def get_middle_intersection(intersections):
     lonMid = lonMid * (180 / pi)
 
     return latMid, lonMid
-
-
-def get_closest_vp(measurement_set: dict) -> tuple:
-    """return the position of the vantage point with shortest ping measurement"""
-    shortest_ping = float("inf")
-    closest_vp = None
-    for vp, result in measurement_set.items():
-        if shortest_ping > result["min_rtt"]:
-            shortest_ping = result["min_rtt"]
-            closest_vp = vp
-
-    return closest_vp
 
 
 def select_best_guess_centroid(target_ip, vp_coordinates_per_ip, rtt_per_vp_to_target):
