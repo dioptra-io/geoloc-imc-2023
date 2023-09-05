@@ -2,9 +2,7 @@
 __pycache__/
 
 # output files
-*.json
 *.fsdb
-*.txt
 *.pdf
 *.csv
 *.dat
