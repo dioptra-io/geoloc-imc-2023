@@ -1,3 +1,5 @@
+# Functions for analysis
+
 import random
 import numpy as np
 
@@ -13,6 +15,38 @@ from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST
 
 
 ########## MILLION SCALE ##########
+
+def compute_closest_rtt_probes(rtts_per_dst_prefix, vp_coordinates_per_ip, vp_distance_matrix, is_prefix, n_shortest=10):
+
+    vps_per_prefix = {}
+    for dst, src_min_rtt in rtts_per_dst_prefix.items():
+        if not is_prefix:
+            if dst not in vp_coordinates_per_ip:
+                continue
+        sorted_probes = sorted(src_min_rtt.items(), key=lambda x: x[1][0])
+
+        n_shortest_probes = dict(sorted_probes[:n_shortest])
+        # Check if the shortest probes respect the speed of Internet
+        n_shortest_probes_checked = {}
+        min_rtt_probe, min_rtt = None, 1000
+        if not is_prefix:
+            for probe, rtts in n_shortest_probes.items():
+                min_rtt_probe = min(rtts)
+                if probe not in vp_distance_matrix[dst]:
+                    continue
+                max_theoretical_distance = (
+                    SPEED_OF_INTERNET * min_rtt_probe/1000) / 2
+                if vp_distance_matrix[dst][probe] > max_theoretical_distance:
+                    # Impossible distance
+                    continue
+                n_shortest_probes_checked[probe] = n_shortest_probes[probe]
+        else:
+            n_shortest_probes_checked = n_shortest_probes
+
+        vps_per_prefix[dst] = n_shortest_probes_checked
+
+    return vps_per_prefix
+
 
 def compute_geolocation_features_per_ip_impl(dst, rtt_per_src, vps_per_target,
                                              vp_coordinates_per_ip, vp_distance_matrix_dst,
@@ -386,8 +420,7 @@ def round_based_algorithm(greedy_probes, rtt_per_srcs_dst, vp_coordinates_per_ip
             continue
         args.append((dst, rtt_per_src, vp_coordinates_per_ip,
                     vps_per_target_greedy, asn_per_vp, threshold))
-    with Pool(4) as p:
-        # with Pool(24) as p:
+    with Pool(24) as p:
         results = p.starmap(round_based_algorithm_impl, args)
         return results
 

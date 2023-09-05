@@ -2052,21 +2052,6 @@ docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.1)", "sphinx-
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4)", "pytest-cov (>=4.1)", "pytest-mock (>=3.11.1)"]
 
 [[package]]
-name = "plotly"
-version = "5.16.1"
-description = "An open-source, interactive data visualization library for Python"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "plotly-5.16.1-py2.py3-none-any.whl", hash = "sha256:19cc34f339acd4e624177806c14df22f388f23fb70658b03aad959a0e650a0dc"},
-    {file = "plotly-5.16.1.tar.gz", hash = "sha256:295ac25edeb18c893abb71dcadcea075b78fd6fdf07cee4217a4e1009667925b"},
-]
-
-[package.dependencies]
-packaging = "*"
-tenacity = ">=6.2.0"
-
-[[package]]
 name = "prometheus-client"
 version = "0.17.1"
 description = "Python client for the Prometheus monitoring system."
@@ -2144,6 +2129,33 @@ files = [
 
 [package.extras]
 tests = ["pytest"]
+
+[[package]]
+name = "py-radix"
+version = "0.10.0"
+description = "Radix tree implementation"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py-radix-0.10.0.tar.gz", hash = "sha256:b8dbd1344bb30c6a1097d4103203c7b117d92931620365985018de4bef5aede3"},
+    {file = "py_radix-0.10.0-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:b6c6e6100061e677bc5f6b90d9df10291c764af903268e6f8b599b530865aeae"},
+    {file = "py_radix-0.10.0-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:c36ef71ec45eb586afc9431dbb51aebfe73caf5940b381bdcd96ef76d13aa787"},
+    {file = "py_radix-0.10.0-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:48f1d341328cf69479343ef75dc06939dd50e507b0c1d5e985ffe8fec797d1c6"},
+    {file = "py_radix-0.10.0-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:0c4956f6489bed71798a68f2e9217037a8631a2b057b42484a5833b013f2415c"},
+]
+
+[[package]]
+name = "pyasn"
+version = "1.6.2"
+description = "Offline IP address to Autonomous System Number lookup module."
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyasn-1.6.2.tar.gz", hash = "sha256:a2d55fb3ee47947609f50211ca5b0bac411a86f3c935fb92ca4b0b8ab7c668ff"},
+]
+
+[package.extras]
+test = ["pytest"]
 
 [[package]]
 name = "pycparser"
@@ -2746,27 +2758,6 @@ doc = ["jupytext", "matplotlib (>2)", "myst-nb", "numpydoc", "pooch", "pydata-sp
 test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
-name = "seaborn"
-version = "0.12.2"
-description = "Statistical data visualization"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "seaborn-0.12.2-py3-none-any.whl", hash = "sha256:ebf15355a4dba46037dfd65b7350f014ceb1f13c05e814eda2c9f5fd731afc08"},
-    {file = "seaborn-0.12.2.tar.gz", hash = "sha256:374645f36509d0dcab895cba5b47daf0586f77bfe3b36c97c607db7da5be0139"},
-]
-
-[package.dependencies]
-matplotlib = ">=3.1,<3.6.1 || >3.6.1"
-numpy = ">=1.17,<1.24.0 || >1.24.0"
-pandas = ">=0.25"
-
-[package.extras]
-dev = ["flake8", "flit", "mypy", "pandas-stubs", "pre-commit", "pytest", "pytest-cov", "pytest-xdist"]
-docs = ["ipykernel", "nbconvert", "numpydoc", "pydata_sphinx_theme (==0.10.0rc2)", "pyyaml", "sphinx-copybutton", "sphinx-design", "sphinx-issues"]
-stats = ["scipy (>=1.3)", "statsmodels (>=0.10)"]
-
-[[package]]
 name = "send2trash"
 version = "1.8.2"
 description = "Send file to trash natively under Mac OS X, Windows and Linux"
@@ -2921,20 +2912,6 @@ pure-eval = "*"
 
 [package.extras]
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
-
-[[package]]
-name = "tenacity"
-version = "8.2.3"
-description = "Retry code until it succeeds"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
-    {file = "tenacity-8.2.3.tar.gz", hash = "sha256:5398ef0d78e63f40007c1fb4c0bff96e1911394d2fa8d194f77619c05ff6cc8a"},
-]
-
-[package.extras]
-doc = ["reno", "sphinx", "tornado (>=4.5)"]
 
 [[package]]
 name = "terminado"
@@ -3242,4 +3219,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "5c1fbf7b4be6b7fc1d91f12c001bca262f5a68d72bbe047a3873fa14689d0551"
+content-hash = "7e96d24ac7b737c2176ce26ee7b7b4c731cd4fd1c9b889c1b43a38df653940ee"
