@@ -1,16 +1,124 @@
-# Towards a Publicly Available Internet scale IP Geolocation Dataset: a Replication Study
+#  🗺️ GeoScale — Open-source tools for client-independent IP addresses geolocation
 
-## Introduction
+GeoScale provides code for reproducing two IP addresses geolocation techniques using active measurements on
 
-A faire
+1. [Million Scale paper](https://dl.acm.org/doi/abs/10.1145/2398776.2398790?casa_token=8VDXwdGxNbAAAAAA:Aj5Sob6bUjhA0PX4fwtc_5uYZqFQv6iVRH8d_eoW98FA-fdjIJilue0NjZrMEcIimuAF9jeywJr_gQ): Internet scale geolocation technique, large dataset.
 
-## How to use ?
+2. [Street level paper](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf): Highly precise technique, on reduced dataset.
 
-The concept of this repository is to run several notebooks to (petit à petit) reconstitute the results of the replication paper.  
+This project is part of a reproductibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
 
-Two options are available : you can either use our datasets and results and verify them, or do your own measurements and then check if you have something similar with the paper.  
+This repository offers the posibility to: 
+- reproduce our results "offline" by using our own measurement datasets.
+- run experiments on user defined set of targets and vantage points.
 
-First clone the repo, make sure you have the good configuration (see just below) and run the notebooks in the following order.  
+Note: Most measurement requires a [RIPE Atlas] account, the plateform we used to run our geolocation measurements.
+
+⚠️ **Measurements on large datasets cost a lot of ressources**, be carefull when running any measurements.
+
+
+## Table of contents
+
+- [Installation](#installation)
+  - [Requirements](#requirements)
+  - [Install source files](#install-source-files)
+  - [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
+  - [Clickhouse](#clickhouse)
+  - [Download datasets](#download-datasets)
+  - [Further notice](#further-notice)
+- [Publication results analysis](#publication-results-analysis)
+- [Run your own measurements](#run-your-own-measurements)
+
+## [Installation](#installation)
+
+
+### [Requirements](#requirements)
+
+- [Python3.9](https://www.python.org/downloads/) (or above)
+- [Poetry](https://python-poetry.org/docs/)
+- [Clickhouse](https://clickhouse.com/docs/en/install) (optional for measurements?)
+
+### [Install source files](#install-source-files)
+
+Clone the repository:
+
+```bash
+git clone https://github.com/dioptra-io/geoloc-imc-2023.git
+cd geoloc-imc-2023
+```
+
+GeoScale uses poetry has dependency manager, install the project using:
+```bash
+poetry shell
+poetry lock
+poetry install
+```
+
+### [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
+
+1. set these env variables within a .env file at the root directory of the projects:
+```.env
+RIPE_USERNAME=<your_username>
+RIPE_SECRET_KEY=<your_secret_key>
+```
+2. Export directly with:
+```bash
+export RIPE_USERNAME=<your_username>
+export RIPE_SECRET_KEY=<your_secret_key>
+```
+
+### Clickhouse
+
+TODO: explain setup + insert results files + credentials.
+
+### [Download datasets](#download-datasets)
+
+
+As mentionned GeoScale can be used to reproduce our results. You can download our measurement using:
+
+```bash
+curl -? <some_url_towards_an_uninexting_ftp> # TODO: ftp arborescence
+```
+
+
+### [Further notice](#notice)
+
+#### Test environement
+
+All codes and scripts have been tested on: 
+- CentOS (version)
+- Coer?
+- RAM?
+- etc.
+
+⚠️ Some scripts and analysis are heavy consumers, some lasting for hours potentially. Make sure that your configuration is sufficiently robust.
+
+#### Windows
+
+Furthermore, Linux is recommended but not mandatory.  
+If you use Windows, you might have problems with the Windows path while using pyasn.  
+You also have something to change in the section "Get population data" of create_datasets.ipynb.
+
+## [Publication results analysis](#publication-results-analysis)
+
+
+Option 2 : Only do the analysis
+- analysis/million_scale.ipynb
+- analysis/tables.ipynb
+- plot/plot.ipynb
+
+Move the measurement to the right directory
+
+Finnally, you can run:
+- this notebook for million scale results analysis
+- this notebook for street level results analysis
+
+Both notebooks provides results and figures.
+
+TODO : setup processor used number when running some scripts.  
+
+
+## [Run your own measurements](#run-your-own-measurements)
 
 Option 1 : Do your own measurements
 - datasets/create_datasets.ipynb
@@ -19,60 +127,27 @@ Option 1 : Do your own measurements
 - measurements/probe_and_anchor_measurements.ipynb
 - measurements/landmark_traceroutes.ipynb
 
-Option 2 : Only do the analysis
-- analysis/million_scale.ipynb
-- analysis/tables.ipynb
-- plot/plot.ipynb
-
-## Configuration
-
-We used several tools for this project. All the prerequisites you need to run the code are explained in this section.
-
-### Poetry
-
-A faire
-
-### Clickhouse
-
-A faire
-
-### Datasets
-
-Some other online datasets are required. They have been downloaded and are grouped in a zip format.  
-
-#### Option 1 : Use all our datasets.
-After cloning the repository, unzip the (TROUVER UN NOM) folder (ET DIRE OU IL EST DISPONIBLE). It contains 4 subfolders :
-- analysis_results. Rename the folder as only "results" and move it into the analysis folder.
-- datasets. To move directly in the original repository.
-- measurements_results. Rename the folder as only "results" and move it into the measurements folder.
-- pdf. It contains all the pdf of the paper. You are supposed to get exactmy the same while running the code.
-
-#### Option 2 : Recreate your own datasets.
 In that case, most of the data will be regenerated while the code is run eventhough you need few basic files.
 After cloning the repository, unzip the (TROUVER UN NOM 2) folder (ET DIRE OU IL SE TROUVE). It contains 2 subfolders.
-- geography
-- various
+- geography -> cities? to remove? 
+- various -> various what?
 Move these two folders into the dataset folder.
 
-### RIPE ATLAS account
+## 📚 Publications
 
-Targets and vantage points used in this project are provided by RIPE ATLAS. They can be gotten using RIPE ATLAS API (LIEN).  
+```bibtex
+@inproceedings{UponValidation,
+  title={Towards a Publicly Available Internet scale IP
+  Geolocation Dataset: a Replication Study},
+  author={Darwich, Rimlinger, Dreyfus, Gouel, Vermeulen},
+  booktitle={Proceedings of the 2023 Internet Measurement Conference},
+  pages={404--404},
+  year={2023}
+}
+```
 
-WARNING (WARNING) As explained in the paper, you need RIPE ATLAS account and credits to do some measurements.  
-The total number of credits used in this project is significant and you may not be able to do as much measurements as us.  
-Please consider this issue before doing your own measurements.  
 
-Once you have an account, you have to indicate your credentials in the default.py file.
+## 🧑‍💻 Authors
 
-### Golbal configuration
+This project is the result of a collaboration between the [LAAS-CNRS](https://www.laas.fr/public/) and [Sorbonne Université](https://www.sorbonne-universite.fr/).
 
-Some of the algorithms are quite heavy, computationnal, and time consumming. There is an indication for each algorithm that needs from several dozens of minutes to several hours to run.  
-
-The machine used by our team has the following (charactéristiques):
-- INDIQUER LES TRUCS DE VENUS
-Make sure you have enough (RAM and computationnal power) before running the code.  
-Sometimes, we use multiprocessing with the Pool() method. Depending on your computer, you might like changing the number of processor used.  
-
-Furthermore, Linux is recommended but not mandatory.  
-If you use Windows, you might have problems with the Windows path while using pyasn.  
-You also have something to change in the section "Get population data" of create_datasets.ipynb.
