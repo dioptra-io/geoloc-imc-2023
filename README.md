@@ -1,20 +1,19 @@
-#  🗺️ GeoScale — Open-source tools for client-independent IP addresses geolocation
-
+#  🗺️ GeoScale — Towards a Publicly Available Internet scale IP Geolocation Dataset: a Replication Study
 GeoScale provides code for reproducing two IP addresses geolocation techniques using active measurements on
 
 1. [Million Scale paper](https://dl.acm.org/doi/abs/10.1145/2398776.2398790?casa_token=8VDXwdGxNbAAAAAA:Aj5Sob6bUjhA0PX4fwtc_5uYZqFQv6iVRH8d_eoW98FA-fdjIJilue0NjZrMEcIimuAF9jeywJr_gQ): Internet scale geolocation technique, large dataset.
 
 2. [Street level paper](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf): Highly precise technique, on reduced dataset.
 
-This project is part of a reproductibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
+This project is part of a reproducibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
 
-This repository offers the posibility to: 
+This repository offers the possibility to: 
 - reproduce our results "offline" by using our own measurement datasets.
 - run experiments on user defined set of targets and vantage points.
 
-Note: Most measurement requires a [RIPE Atlas] account, the plateform we used to run our geolocation measurements.
+Note: Most measurement requires a [RIPE Atlas] account, the platform we used to run our geolocation measurements.
 
-⚠️ **Measurements on large datasets cost a lot of ressources**, be carefull when running any measurements.
+⚠️ **Measurements on large datasets cost a lot of resources**, be careful when running any measurements.
 
 
 ## Table of contents
@@ -127,7 +126,7 @@ Option 1 : Do your own measurements
 - measurements/probe_and_anchor_measurements.ipynb
 - measurements/landmark_traceroutes.ipynb
 
-In that case, most of the data will be regenerated while the code is run eventhough you need few basic files.
+In that case, most of the data will be regenerated while the code is run even though you need few basic files.
 After cloning the repository, unzip the (TROUVER UN NOM 2) folder (ET DIRE OU IL SE TROUVE). It contains 2 subfolders.
 - geography -> cities? to remove? 
 - various -> various what?
