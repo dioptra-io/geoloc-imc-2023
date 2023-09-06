@@ -7,11 +7,11 @@ from multiprocessing.pool import Pool
 from clickhouse_driver import Client
 from ipaddress import ip_network
 
-from scripts.utils.file_utils import load_json
+from scripts.utils.file_utils import load_json, dump_json
 from scripts.utils.helpers import haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections, circle_preprocessing
 from scripts.utils.clickhouse_utils import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
-from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST
+from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST, BGP_PRIFIXES_FILE
 
 
 ########## MILLION SCALE ##########
@@ -449,7 +449,7 @@ def every_tier_result(data):
         if f in data:
             for _, _, l_lat, l_lon in data[f]:
                 dist = haversine(
-                    (l_lat, l_lon), (data['lat_c'], data['lon_c']))
+                    (l_lat, l_lon), (data['RIPE:lat'], data['RIPE:lon']))
                 if dist < best_dist:
                     best_dist = dist
                     best_correct_lat = l_lat
@@ -522,13 +522,13 @@ def every_tier_result(data):
 def every_tier_result_and_errors(data):
     res = every_tier_result(data)
     res['error1'] = haversine(
-        (res['lat1'], res['lon1']), (data['lat_c'], data['lon_c']))
+        (res['lat1'], res['lon1']), (data['RIPE:lat'], data['RIPE:lon']))
     res['error2'] = haversine(
-        (res['lat2'], res['lon2']), (data['lat_c'], data['lon_c']))
+        (res['lat2'], res['lon2']), (data['RIPE:lat'], data['RIPE:lon']))
     res['error3'] = haversine(
-        (res['lat3'], res['lon3']), (data['lat_c'], data['lon_c']))
+        (res['lat3'], res['lon3']), (data['RIPE:lat'], data['RIPE:lon']))
     res['error4'] = haversine(
-        (res['lat4'], res['lon4']), (data['lat_c'], data['lon_c']))
+        (res['lat4'], res['lon4']), (data['RIPE:lat'], data['RIPE:lon']))
     return res
 
 
@@ -538,6 +538,7 @@ def local_circle_preprocessing(circles, speed_threshold=None):
     for circle in circles:
         min_rtt = min(min_rtt, circle[2])
 
+    # Remove large RTTs
     for circle in circles:
         if circle[2] < min_rtt * 5:
             res_circles.append(circle)
@@ -546,15 +547,7 @@ def local_circle_preprocessing(circles, speed_threshold=None):
 
 
 def get_all_bgp_prefixes():
-    client = Client('127.0.0.1')
-    db_table = client.execute(
-        f'select distinct prefix from bgp_interdomain_te.IPv4_3238002744')
-    res = {}
-    for line in db_table:
-        pref = line[0]
-        if "." in pref:
-            res[pref] = 1
-    return res
+    return load_json(BGP_PRIFIXES_FILE)
 
 
 def is_same_bgp_prefix(ip1, ip2, prefixes):

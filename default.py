@@ -24,8 +24,8 @@ TARGET_TO_LANDMARKS_PING_TABLE = f"targets_to_landmarks_pings"
 # username: email address
 # key: password
 RIPE_CREDENTIALS = {
-    "username": "",
-    "key": "",
+    "username": "timur.friedman@sorbonne-universite.fr",
+    "key": "b3d3d4fc-724e-4505-befe-1ad16a70dc87",
 }
 
 
@@ -76,14 +76,12 @@ ADDRESS_FILE: Path = (
 GEOLITE_FILE: Path = VARIOUS_PATH / "GeoLite2-City-Blocks-IPv4_20230516.tree"
 IP_INFO_GEO_FILE: Path = VARIOUS_PATH / "ip_info_geo_anchors.json"
 MAXMIND_GEO_FILE: Path = VARIOUS_PATH / "maxmind_free_geo_anchors.json"
-<<<<<<< HEAD
 GEOPAPIFY_1_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_0_500.csv"
 GEOPAPIFY_2_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_500_last.csv"
-=======
->>>>>>> 584214ace8edd8b3313137d19e6e697e8e900afb
 IP_TO_ASN_FILE: Path = VARIOUS_PATH / "2022-03-28.dat"
 ANCHORS_SECOND_PAPER_FILE: Path = VARIOUS_PATH / "anchors_ip_list.json"
 CACHED_WEBSITES_FILE: Path = VARIOUS_PATH / "websites.json"
+BGP_PRIFIXES_FILE: Path = VARIOUS_PATH / "bgp_prefixes.json"
 
 
 # Measurements paths
