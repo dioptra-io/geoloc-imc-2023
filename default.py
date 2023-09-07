@@ -18,8 +18,10 @@ SPEED_OF_INTERNET = SPEED_OF_LIGHT * 2 / 3
 # CLICKHOUSE SETTINGS                                                                            #
 ##################################################################################################
 
-DB_HOST = "localhost"
-GEO_REPLICATION_DB = "geolocation_replication"
+CLICKHOUSE_HOST = "localhost"
+CLICKHOUSE_DB = "geolocation_replication"
+CLICKHOUSE_USER = "default"
+CLICKHOUSE_PASSWORD = ""
 ANCHORS_MESHED_PING_TABLE = f"anchors_meshed_pings"
 PROBES_TO_ANCHORS_PING_TABLE = f"ping_10k_to_anchors"
 ANCHORS_TO_PREFIX_TABLE = f"anchors_to_prefix_pings"
@@ -33,25 +35,34 @@ ATLAS_PATH: Path = DEFAULT_DIR / "datasets/atlas/"
 ##################################################################################################
 # REPRODUCIBILITY DATASET FILES (static)                                                         #
 ##################################################################################################
-REPRO_PATH: Path = ATLAS_PATH / "reproducibility/"
+REPRO_PATH: Path = ATLAS_PATH / "reproducibility_datasets/"
 REPRO_ANCHORS_FILE: Path = REPRO_PATH / "reproducibility_anchors.json"
 REPRO_PROBES_FILE: Path = REPRO_PATH / "reproducibility_probes.json"
 REPRO_PROBES_AND_ANCHORS_FILE: Path = (
     REPRO_PATH / "reproducibility_probes_and_anchors.json"
 )
+REPRO_PAIRWISE_DISTANCE_FILE = (
+    REPRO_PATH / "reproducibility_pairwise_distance_ripe_probes.json"
+)
 
 ##################################################################################################
 # USER DATASET FILES (generated)                                                                 #
 ##################################################################################################
+USER_PATH: Path = DEFAULT_DIR / "datasets/user_datasets/"
+USER_ATLAS_PATH: Path = USER_PATH / "atlas/"
+USER_GENERATED_PATH: Path = USER_PATH / "generated/"
 
-USER_PATH: Path = ATLAS_PATH / "user/"
-USER_ANCHORS_FILE: Path = USER_PATH / "anchors.json"
-USER_PROBES_FILE: Path = USER_PATH / "probes.json"
-USER_PROBES_AND_ANCHORS_FILE: Path = USER_PATH / "probes_and_anchors.json"
+USER_ANCHORS_FILE: Path = USER_ATLAS_PATH / "user_anchors.json"
+USER_PROBES_FILE: Path = USER_ATLAS_PATH / "user_probes.json"
+USER_PROBES_AND_ANCHORS_FILE: Path = USER_ATLAS_PATH / "user_probes_and_anchors.json"
 
-REMOVED_PROBES_FILE: Path = USER_PATH / "removed_probes.json"
-FILTERED_PROBES_FILE: Path = USER_PATH / "filtered_probes.json"
-GREEDY_PROBES_FILE: Path = USER_PATH / "greedy_probes.json"
+USER_PAIRWISE_DISTANCE_FILE: Path = (
+    USER_GENERATED_PATH / "user_pairwise_distance_ripe_probes.json"
+)
+USER_REMOVED_PROBES_FILE: Path = USER_GENERATED_PATH / "user_removed_probes.json"
+USER_FILTERED_PROBES_FILE: Path = USER_GENERATED_PATH / "user_filtered_probes.json"
+USER_GREEDY_PROBES_FILE: Path = USER_GENERATED_PATH / "user_greedy_probes.json"
+USER_HITLIST_FILE: Path = USER_GENERATED_PATH / "user_parsed_hitlist.json"
 
 
 ##################################################################################################
@@ -64,38 +75,33 @@ ASNS_TYPE_STANFORD: Path = ASNS_TYPES / "AS_categories_stanford.json"
 
 
 ##################################################################################################
-# GEOGRAPHY DATASETS AND RELATED FILES                                                           #
+# STATIC FILES                                                                                   #
 ##################################################################################################
+STATIC_PATH: Path = DEFAULT_DIR / "datasets/static_datasets/"
 
-GEOGRAPHIC_PATH: Path = DEFAULT_DIR / "datasets/geography/"
-COUNTRIES_JSON_FILE: Path = GEOGRAPHIC_PATH / "countries.json"
-COUNTRIES_TXT_FILE: Path = GEOGRAPHIC_PATH / "countries.txt"
-COUNTRIES_CSV_FILE: Path = GEOGRAPHIC_PATH / "iso_code_2.csv"
-POPULATION_CITY_FILE: Path = GEOGRAPHIC_PATH / "population.json"
-CITIES_500_FILE: Path = GEOGRAPHIC_PATH / "cities500.txt"
+COUNTRIES_JSON_FILE: Path = STATIC_PATH / "countries.json"
+COUNTRIES_TXT_FILE: Path = STATIC_PATH / "countries.txt"
+COUNTRIES_CSV_FILE: Path = STATIC_PATH / "iso_code_2.csv"
+POPULATION_CITY_FILE: Path = STATIC_PATH / "population.json"
+CITIES_500_FILE: Path = STATIC_PATH / "cities500.txt"
 POPULATION_DENSITY_FILE: Path = (
-    GEOGRAPHIC_PATH / "gpw_v4_population_density_rev11_2020_30_sec.tif"
+    STATIC_PATH / "gpw_v4_population_density_rev11_2020_30_sec.tif"
 )
 
-##################################################################################################
-# OTHER FILES                                                                                    #
-##################################################################################################
-
-VARIOUS_PATH: Path = DEFAULT_DIR / "datasets/various/"
-PAIRWISE_DISTANCE_FILE = VARIOUS_PATH / "pairwise_distance_ripe_probes.json"
-HITLIST_FILE: Path = VARIOUS_PATH / "parsed_hitlist.json"
 ADDRESS_FILE: Path = (
-    VARIOUS_PATH / "internet_address_verfploeter_hitlist_it102w-20230125.fsdb"
+    STATIC_PATH / "internet_address_verfploeter_hitlist_it102w-20230125.fsdb"
 )
-GEOLITE_FILE: Path = VARIOUS_PATH / "GeoLite2-City-Blocks-IPv4_20230516.tree"
-IP_INFO_GEO_FILE: Path = VARIOUS_PATH / "ip_info_geo_anchors.json"
-MAXMIND_GEO_FILE: Path = VARIOUS_PATH / "maxmind_free_geo_anchors.json"
-GEOPAPIFY_1_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_0_500.csv"
-GEOPAPIFY_2_FILE: Path = VARIOUS_PATH / "geocoded_by_geoapify-10_05_2023_500_last.csv"
-IP_TO_ASN_FILE: Path = VARIOUS_PATH / "2022-03-28.dat"
-ANCHORS_SECOND_PAPER_FILE: Path = VARIOUS_PATH / "anchors_ip_list.json"
-CACHED_WEBSITES_FILE: Path = VARIOUS_PATH / "websites.json"
-BGP_PRIFIXES_FILE: Path = VARIOUS_PATH / "bgp_prefixes.json"
+GEOLITE_FILE: Path = STATIC_PATH / "GeoLite2-City-Blocks-IPv4_20230516.tree"
+IP_INFO_GEO_FILE: Path = STATIC_PATH / "ip_info_geo_anchors.json"
+MAXMIND_GEO_FILE: Path = STATIC_PATH / "maxmind_free_geo_anchors.json"
+
+GEOPAPIFY_1_FILE: Path = STATIC_PATH / "geocoded_by_geoapify-10_05_2023_0_500.csv"
+GEOPAPIFY_2_FILE: Path = STATIC_PATH / "geocoded_by_geoapify-10_05_2023_500_last.csv"
+
+IP_TO_ASN_FILE: Path = STATIC_PATH / "2022-03-28.dat"
+ANCHORS_SECOND_PAPER_FILE: Path = STATIC_PATH / "anchors_ip_list.json"
+CACHED_WEBSITES_FILE: Path = STATIC_PATH / "websites.json"
+BGP_PRIFIXES_FILE: Path = STATIC_PATH / "bgp_prefixes.json"
 
 ##################################################################################################
 # ANALYSIS RESULTS FILES                                                                         #
