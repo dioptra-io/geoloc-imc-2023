@@ -8,11 +8,26 @@ from clickhouse_driver import Client
 from ipaddress import ip_network
 
 from scripts.utils.file_utils import load_json
-from scripts.utils.helpers import haversine, select_best_guess_centroid, is_within_cirle, polygon_centroid, circle_intersections, circle_preprocessing
-from scripts.utils.clickhouse_utils import get_min_rtt_per_src_dst_query_ping_table, get_min_rtt_per_src_dst_prefix_query_ping_table
+from scripts.utils.clickhouse import Clickhouse
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
-from default import SPEED_OF_INTERNET, GEO_REPLICATION_DB, DB_HOST, BGP_PRIFIXES_FILE
 from logger import logger
+from scripts.utils.helpers import (
+    haversine,
+    select_best_guess_centroid,
+    is_within_cirle,
+    polygon_centroid,
+    circle_intersections,
+    circle_preprocessing,
+)
+from default import (
+    SPEED_OF_INTERNET,
+    CLICKHOUSE_HOST,
+    CLICKHOUSE_DB,
+    CLICKHOUSE_USER,
+    CLICKHOUSE_PASSWORD,
+    SPEED_OF_INTERNET,
+    BGP_PRIFIXES_FILE,
+)
 
 ########## MILLION SCALE ##########
 
@@ -257,6 +272,24 @@ def compute_accuracy_vs_number_of_vps(
     return accuracy_vs_n_vps
 
 
+def get_min_rtt_per_src_dst_query_ping_table(
+    database, table, filter=None, threshold=10000
+):
+    return f"""
+    WITH  arrayMin(groupArray(`min`)) as min_rtt
+    SELECT IPv4NumToString(dst), IPv4NumToString(src), min_rtt
+    FROM {database}.{table}
+    WHERE `min` > -1 AND `min`< {threshold} AND dst != src
+    GROUP BY (dst, src)
+    """
+
+
+def get_min_rtt_per_src_dst_prefix_query_ping_table(
+    database, table, filter=None, threshold=10000
+):
+    pass
+
+
 def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
     """
     Compute the guessed geolocation of the targets
@@ -264,21 +297,56 @@ def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
     # Compute the geolocation of the different IP addresses
     if not is_per_prefix:
         query = get_min_rtt_per_src_dst_query_ping_table(
-            GEO_REPLICATION_DB, table, filter=filter, threshold=threshold
+            CLICKHOUSE_DB, table, filter=filter, threshold=threshold
         )
     else:
         query = get_min_rtt_per_src_dst_prefix_query_ping_table(
-            GEO_REPLICATION_DB, table, filter=filter, threshold=threshold
+            CLICKHOUSE_DB, table, filter=filter, threshold=threshold
         )
 
-    client = Client(DB_HOST)
+    client = Client(CLICKHOUSE_HOST)
 
     settings = {"max_block_size": 100000}
     rows = client.execute_iter(query, settings=settings)
+
     rtt_per_srcs_dst = {}
     for dst, src, min_rtt in rows:
         rtt_per_srcs_dst.setdefault(dst, {})[src] = [min_rtt]
     client.disconnect()
+    return rtt_per_srcs_dst
+
+
+def compute_rtts_per_dst_src_test(table, filter, threshold, is_per_prefix=False):
+    """
+    Compute the guessed geolocation of the targets
+    """
+    clickhouse_wrapper = Clickhouse(
+        host=CLICKHOUSE_HOST,
+        database=CLICKHOUSE_DB,
+        user=CLICKHOUSE_USER,
+        password=CLICKHOUSE_PASSWORD,
+    )
+
+    # Compute the geolocation of the different IP addresses
+    if not is_per_prefix:
+        query = clickhouse_wrapper.get_min_rtt_per_src_dst_query(
+            table, filter=filter, threshold=threshold
+        )
+    else:
+        query = clickhouse_wrapper.get_min_rtt_per_src_dst_prefix_query(
+            table, filter=filter, threshold=threshold
+        )
+
+    rows = clickhouse_wrapper.execute_iter(query)
+
+    rtt_per_srcs_dst = {}
+    for dst, src, min_rtt in rows:
+        rtt_per_srcs_dst.setdefault(dst, {})[src] = [min_rtt]
+
+    print(len(rtt_per_srcs_dst))
+
+    clickhouse_wrapper.client.disconnect()
+
     return rtt_per_srcs_dst
 
 
@@ -566,8 +634,7 @@ def every_tier_result(data):
     for f in ["tier2:landmarks", "tier3:landmarks"]:
         if f in data:
             for _, _, l_lat, l_lon in data[f]:
-                dist = haversine(
-                    (l_lat, l_lon), (data['RIPE:lat'], data['RIPE:lon']))
+                dist = haversine((l_lat, l_lon), (data["RIPE:lat"], data["RIPE:lon"]))
                 if dist < best_dist:
                     best_dist = dist
                     best_correct_lat = l_lat
@@ -640,14 +707,18 @@ def every_tier_result(data):
 
 def every_tier_result_and_errors(data):
     res = every_tier_result(data)
-    res['error1'] = haversine(
-        (res['lat1'], res['lon1']), (data['RIPE:lat'], data['RIPE:lon']))
-    res['error2'] = haversine(
-        (res['lat2'], res['lon2']), (data['RIPE:lat'], data['RIPE:lon']))
-    res['error3'] = haversine(
-        (res['lat3'], res['lon3']), (data['RIPE:lat'], data['RIPE:lon']))
-    res['error4'] = haversine(
-        (res['lat4'], res['lon4']), (data['RIPE:lat'], data['RIPE:lon']))
+    res["error1"] = haversine(
+        (res["lat1"], res["lon1"]), (data["RIPE:lat"], data["RIPE:lon"])
+    )
+    res["error2"] = haversine(
+        (res["lat2"], res["lon2"]), (data["RIPE:lat"], data["RIPE:lon"])
+    )
+    res["error3"] = haversine(
+        (res["lat3"], res["lon3"]), (data["RIPE:lat"], data["RIPE:lon"])
+    )
+    res["error4"] = haversine(
+        (res["lat4"], res["lon4"]), (data["RIPE:lat"], data["RIPE:lon"])
+    )
     return res
 
 
