@@ -3,7 +3,7 @@
 import itertools
 import numpy as np
 
-from math import asin, cos, radians, sin, sqrt, pi
+from math import asin, cos, log, radians, sin, sqrt, pi
 
 
 def internet_speed(rtt, speed_threshold):
@@ -327,3 +327,11 @@ def get_points_in_poly(circles, rot, rad, speed, old_circles=[]):
                     points_added = True
                     res.append(point)
     return res
+
+def greedy_selection_probes_impl(probe, distance_per_probe, selected_probes):
+
+    distances_log = [log(distance_per_probe[p]) for p in selected_probes
+                     if p in distance_per_probe and distance_per_probe[p] > 0]
+    total_distance = sum(distances_log)
+    return probe, total_distance
+    
