@@ -3493,5 +3493,9 @@ python-versions = "^3.9,<3.11"
 content-hash = "b5fb4b5ada5dce8682ba4f2040ac3e1d694589971ee751ac0280a7705ba39dff"
 =======
 python-versions = "^3.9"
+<<<<<<< HEAD
 content-hash = "4f182df88f9e8a7cbd59eb7fd7e93242c018e38467e01081ec8d536aa261d6de"
 >>>>>>> 548a168 (fixing path)
+=======
+content-hash = "9f2f46152a02b2280a1e75d622f7d2b6b7bf9eba1d741ada09f9bc23ccc6b98d"
+>>>>>>> 1dca680 (updated project dependencies)
