@@ -33,30 +33,28 @@ class Clickhouse():
 
         self.settings = {"max_block_size": 100000}
 
-    # TODO: find why filter are failing
-    def get_min_rtt_per_src_dst_query(self, table, filter=None, threshold=10000):
+    def get_min_rtt_per_src_dst_query(self, table: str, filter: str, threshold=10000) -> str:
         return f"""
         WITH  arrayMin(groupArray(`min`)) as min_rtt
         SELECT IPv4NumToString(dst), IPv4NumToString(src), min_rtt
         FROM {self.database}.{table}
-        WHERE `min` > -1 AND `min`< {threshold} AND dst != src
+        WHERE `min` > -1 AND `min`< {threshold} AND dst != src {filter}
         GROUP BY (dst, src)
         """
 
-    def get_min_rtt_per_src_dst_prefix_query(self, table, filter=None, threshold=10000):
+    def get_min_rtt_per_src_dst_prefix_query(self, table: str, filter: str, threshold=10000) -> str:
         return f"""
         WITH  arrayMin(groupArray(`min`)) as min_rtt
         SELECT IPv4NumToString(dst_prefix), IPv4NumToString(src), min_rtt
         FROM {self.database}.{table}
         WHERE `min` > -1 AND `min`< {threshold}
         AND dst_prefix != toIPv4(substring(cutIPv6(IPv4ToIPv6(src), 0, 1), 8))
-        -- {filter} -> filter not good 
+        AND {filter}
         GROUP BY dst_prefix, src
         """
 
     def execute_iter(self, query: str) -> None:
         """use clickhouse driver instead of subprocess"""
-        logger.info(f"query: {query}")
         return self.client.execute_iter(query, settings=self.settings)
 
     
