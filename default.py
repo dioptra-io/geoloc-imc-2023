@@ -17,7 +17,6 @@ SPEED_OF_INTERNET = SPEED_OF_LIGHT * 2 / 3
 ##################################################################################################
 # CLICKHOUSE SETTINGS                                                                            #
 ##################################################################################################
-
 CLICKHOUSE_HOST = "localhost"
 CLICKHOUSE_DB = "geolocation_replication"
 CLICKHOUSE_USER = "default"
@@ -31,19 +30,33 @@ TARGET_TO_LANDMARKS_PING_TABLE = f"targets_to_landmarks_pings"
 
 # Atlas path
 ATLAS_PATH: Path = DEFAULT_DIR / "datasets/atlas/"
-
 ##################################################################################################
 # REPRODUCIBILITY DATASET FILES (static)                                                         #
 ##################################################################################################
-REPRO_PATH: Path = ATLAS_PATH / "reproducibility_datasets/"
-REPRO_ANCHORS_FILE: Path = REPRO_PATH / "reproducibility_anchors.json"
-REPRO_PROBES_FILE: Path = REPRO_PATH / "reproducibility_probes.json"
+REPRO_PATH: Path = DEFAULT_DIR / "datasets/reproducibility_datasets/"
+REPRO_ATLAS_PATH: Path = REPRO_PATH / "atlas/"
+REPRO_GENERATED_PATH: Path = REPRO_PATH / "generated/"
+
+REPRO_ANCHORS_FILE: Path = REPRO_ATLAS_PATH / "reproducibility_anchors.json"
+REPRO_PROBES_FILE: Path = REPRO_ATLAS_PATH / "reproducibility_probes.json"
 REPRO_PROBES_AND_ANCHORS_FILE: Path = (
-    REPRO_PATH / "reproducibility_probes_and_anchors.json"
+    REPRO_ATLAS_PATH / "reproducibility_probes_and_anchors.json"
 )
-REPRO_PAIRWISE_DISTANCE_FILE = (
-    REPRO_PATH / "reproducibility_pairwise_distance_ripe_probes.json"
+
+REPRO_PAIRWISE_DISTANCE_FILE: Path = (
+    REPRO_GENERATED_PATH / "reproducibility_pairwise_distance_ripe_probes.json"
 )
+REPRO_REMOVED_PROBES_FILE: Path = (
+    REPRO_GENERATED_PATH / "reproducibility_removed_probes.json"
+)
+REPRO_FILTERED_PROBES_FILE: Path = (
+    REPRO_GENERATED_PATH / "reproducibility_filtered_probes.json"
+)
+REPRO_GREEDY_PROBES_FILE: Path = (
+    REPRO_GENERATED_PATH / "reproducibility_greedy_probes.json"
+)
+REPRO_HITLIST_FILE: Path = REPRO_GENERATED_PATH / "reproducibility_parsed_hitlist.json"
+
 
 ##################################################################################################
 # USER DATASET FILES (generated)                                                                 #
@@ -68,7 +81,6 @@ USER_HITLIST_FILE: Path = USER_GENERATED_PATH / "user_parsed_hitlist.json"
 ##################################################################################################
 # RIPE ATLAS VPS BIAS ANALYSIS                                                                   #
 ##################################################################################################
-
 ASNS_TYPES: Path = DEFAULT_DIR / "datasets/asns_types"
 ASNS_TYPE_CAIDA: Path = ASNS_TYPES / "caida_enhanced_as_type.json"
 ASNS_TYPE_STANFORD: Path = ASNS_TYPES / "AS_categories_stanford.json"
@@ -152,7 +164,6 @@ ANALYZABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
 ##################################################################################################
 # FIGURES FILES                                                                                  #
 ##################################################################################################
-
 PDF_PATH: Path = DEFAULT_DIR / "plot/pdf/"
 GEO_DATABASE_FILE: Path = PDF_PATH / "geo_databases.pdf"
 ACCURACY_VS_NB_VPS_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes.pdf"
