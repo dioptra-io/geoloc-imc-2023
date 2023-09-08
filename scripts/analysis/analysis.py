@@ -85,13 +85,15 @@ def compute_geolocation_features_per_ip_impl(
     if is_use_prefix:
         dst_prefix = get_prefix_from_ip(dst)
         if dst_prefix not in vps_per_target:
-            print(
+            logger.info(
                 f"Error, prefix {dst_prefix} not in measurements for VP selection algorithm"
             )
             return features
     else:
         if dst not in vps_per_target:
-            print(f"Error, prefix {dst} not in measurements for VP selection algorithm")
+            logger.info(
+                f"Error, prefix {dst} not in measurements for VP selection algorithm"
+            )
             return features
     # Compute error with different configurations
     errors = []
@@ -257,7 +259,7 @@ def compute_accuracy_vs_number_of_vps(
 
     accuracy_vs_n_vps = {}
     for random_n_vp in subset_sizes:
-        print(f"Starting computing for random VPs {random_n_vp}")
+        logger.info(f"Starting computing for random VPs {random_n_vp}")
         median_error_cdf = []
         for trial in range(0, 100):
             median_error = compute_accuracy_vs_number_of_vps_impl(
@@ -272,51 +274,7 @@ def compute_accuracy_vs_number_of_vps(
     return accuracy_vs_n_vps
 
 
-def get_min_rtt_per_src_dst_query_ping_table(
-    database, table, filter=None, threshold=10000
-):
-    return f"""
-    WITH  arrayMin(groupArray(`min`)) as min_rtt
-    SELECT IPv4NumToString(dst), IPv4NumToString(src), min_rtt
-    FROM {database}.{table}
-    WHERE `min` > -1 AND `min`< {threshold} AND dst != src
-    GROUP BY (dst, src)
-    """
-
-
-def get_min_rtt_per_src_dst_prefix_query_ping_table(
-    database, table, filter=None, threshold=10000
-):
-    pass
-
-
 def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
-    """
-    Compute the guessed geolocation of the targets
-    """
-    # Compute the geolocation of the different IP addresses
-    if not is_per_prefix:
-        query = get_min_rtt_per_src_dst_query_ping_table(
-            CLICKHOUSE_DB, table, filter=filter, threshold=threshold
-        )
-    else:
-        query = get_min_rtt_per_src_dst_prefix_query_ping_table(
-            CLICKHOUSE_DB, table, filter=filter, threshold=threshold
-        )
-
-    client = Client(CLICKHOUSE_HOST)
-
-    settings = {"max_block_size": 100000}
-    rows = client.execute_iter(query, settings=settings)
-
-    rtt_per_srcs_dst = {}
-    for dst, src, min_rtt in rows:
-        rtt_per_srcs_dst.setdefault(dst, {})[src] = [min_rtt]
-    client.disconnect()
-    return rtt_per_srcs_dst
-
-
-def compute_rtts_per_dst_src_test(table, filter, threshold, is_per_prefix=False):
     """
     Compute the guessed geolocation of the targets
     """
@@ -342,8 +300,6 @@ def compute_rtts_per_dst_src_test(table, filter, threshold, is_per_prefix=False)
     rtt_per_srcs_dst = {}
     for dst, src, min_rtt in rows:
         rtt_per_srcs_dst.setdefault(dst, {})[src] = [min_rtt]
-
-    print(len(rtt_per_srcs_dst))
 
     clickhouse_wrapper.client.disconnect()
 
@@ -443,7 +399,7 @@ def compute_error_threshold_cdfs(errors_threshold, filter_dsts=None):
         error_threshold_cdfs.append(error_threshold_cdf)
         circles_threshold_cdfs.append(circles_threshold_cdf)
 
-        print(f"Threshold {threshold} no geolocation {n_no_geolocation}")
+        logger.info(f"Threshold {threshold} no geolocation {n_no_geolocation}")
 
     return error_threshold_cdfs, circles_threshold_cdfs, error_per_ip
 
@@ -451,14 +407,6 @@ def compute_error_threshold_cdfs(errors_threshold, filter_dsts=None):
 def compute_remove_wrongly_geolocated_probes(
     rtts_per_srcs_dst, vp_coordinates_per_ip, vp_distance_matrix, removed_anchors
 ):
-    """
-
-    :param rtts_per_srcs_dst:
-    :param vp_coordinates_per_ip:
-    :param vp_distance_matrix:
-    :return:
-    """
-
     speed_of_internet_violations_per_ip = {}
 
     for dst, rtts_per_src in rtts_per_srcs_dst.items():
@@ -484,7 +432,7 @@ def compute_remove_wrongly_geolocated_probes(
     n_violations = sum([len(x) for x in speed_of_internet_violations_per_ip.values()])
     removed_probes = set()
     while n_violations > 0:
-        print("Violations:", n_violations)
+        logger.info("Violations:", n_violations)
         # Remove the IP address with the highest number of SOI violations
         worse_ip, speed_of_internet_violations = max(
             speed_of_internet_violations_per_ip.items(), key=lambda x: len(x[1])
@@ -499,7 +447,6 @@ def compute_remove_wrongly_geolocated_probes(
         n_violations = sum(
             [len(x) for x in speed_of_internet_violations_per_ip.values()]
         )
-    print(len(removed_probes))
     return removed_probes
 
 
@@ -621,7 +568,7 @@ def every_tier_result(data):
         "lon4": 0,
     }
     if not data["tier1:done"]:
-        print("Tier1 Failed")
+        logger.info("Tier1 Failed")
         return res
     lat = data["tier1:lat"]
     lon = data["tier1:lon"]
