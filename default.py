@@ -14,20 +14,6 @@ SPEED_OF_LIGHT = 300000
 SPEED_OF_INTERNET = SPEED_OF_LIGHT * 2 / 3
 
 
-##################################################################################################
-# CLICKHOUSE SETTINGS                                                                            #
-##################################################################################################
-CLICKHOUSE_HOST = "localhost"
-CLICKHOUSE_DB = "geolocation_replication"
-CLICKHOUSE_USER = "default"
-CLICKHOUSE_PASSWORD = ""
-ANCHORS_MESHED_PING_TABLE = f"anchors_meshed_pings"
-PROBES_TO_ANCHORS_PING_TABLE = f"ping_10k_to_anchors"
-ANCHORS_TO_PREFIX_TABLE = f"anchors_to_prefix_pings"
-PROBES_TO_PREFIX_TABLE = f"probes_to_prefix_pings"
-TARGET_TO_LANDMARKS_PING_TABLE = f"targets_to_landmarks_pings"
-
-
 # Atlas path
 ATLAS_PATH: Path = DEFAULT_DIR / "datasets/atlas/"
 ##################################################################################################
@@ -76,6 +62,27 @@ USER_REMOVED_PROBES_FILE: Path = USER_GENERATED_PATH / "user_removed_probes.json
 USER_FILTERED_PROBES_FILE: Path = USER_GENERATED_PATH / "user_filtered_probes.json"
 USER_GREEDY_PROBES_FILE: Path = USER_GENERATED_PATH / "user_greedy_probes.json"
 USER_HITLIST_FILE: Path = USER_GENERATED_PATH / "user_parsed_hitlist.json"
+
+##################################################################################################
+# CLICKHOUSE SETTINGS                                                                            #
+##################################################################################################
+CLICKHOUSE_HOST = "localhost"
+CLICKHOUSE_DB = "geolocation_replication"
+CLICKHOUSE_USER = "default"
+CLICKHOUSE_PASSWORD = ""
+
+ANCHORS_MESHED_PING_TABLE = "anchors_meshed_pings"
+PROBES_TO_ANCHORS_PING_TABLE = "ping_10k_to_anchors"
+ANCHORS_TO_PREFIX_TABLE = "anchors_to_prefix_pings"
+PROBES_TO_PREFIX_TABLE = "probes_to_prefix_pings"
+TARGET_TO_LANDMARKS_PING_TABLE = "targets_to_landmarks_pings"
+
+CLICKHOUSE_STATIC_DATASET: Path = DEFAULT_DIR / "datasets/clickhouse_data" 
+
+PROBES_TO_ANCHORS_PING_FILE = CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_MESHED_PING_TABLE}.zst"
+ANCHORS_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{PROBES_TO_ANCHORS_PING_TABLE}.zst"
+PROBES_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_TO_PREFIX_TABLE}.zst"
+TARGET_TO_LANDMARKS_PING_FILE = CLICKHOUSE_STATIC_DATASET / f"{TARGET_TO_LANDMARKS_PING_TABLE}.zst"
 
 
 ##################################################################################################

@@ -1,6 +1,7 @@
 """clickhouse client"""
 import subprocess
 
+from pathlib import Path
 from clickhouse_driver import Client 
 
 from logger import logger
@@ -10,6 +11,15 @@ from default import (
     CLICKHOUSE_DB,
     CLICKHOUSE_USER,
     CLICKHOUSE_PASSWORD,
+    ANCHORS_MESHED_PING_TABLE,
+    PROBES_TO_ANCHORS_PING_TABLE,
+    ANCHORS_TO_PREFIX_TABLE,
+    PROBES_TO_PREFIX_TABLE,
+    TARGET_TO_LANDMARKS_PING_TABLE,
+    PROBES_TO_ANCHORS_PING_FILE,
+    ANCHORS_TO_PREFIX_FILE,
+    PROBES_TO_PREFIX_FILE,
+    TARGET_TO_LANDMARKS_PING_FILE,
 )
 
 class Clickhouse():
@@ -49,14 +59,21 @@ class Clickhouse():
         FROM {self.database}.{table}
         WHERE `min` > -1 AND `min`< {threshold}
         AND dst_prefix != toIPv4(substring(cutIPv6(IPv4ToIPv6(src), 0, 1), 8))
-        AND {filter}
+        {filter}
         GROUP BY dst_prefix, src
+        """
+    
+    def insert_into_query(self, table: str, infile_path : Path) -> str:
+        """insert data using local clickhouse file"""
+        return f"""
+        INSERT INTO {self.database}.{table}
+        FROM INFILE '{str(infile_path)}'
+        FORMAT Native
         """
 
     def execute_iter(self, query: str) -> None:
         """use clickhouse driver instead of subprocess"""
         return self.client.execute_iter(query, settings=self.settings)
-
     
     def execute(self,query: str) -> None:
         """execute the loaded query"""
@@ -76,8 +93,36 @@ class Clickhouse():
         logger.info(f"query output: {process.stdout}")
 
 
-    def create_anchors_meshed_pings_table()-> None:
-        pass
+
+if __name__ == "__main__":
+
+    # measurements files_path
+    tables = [
+        ANCHORS_MESHED_PING_TABLE,
+        PROBES_TO_ANCHORS_PING_TABLE,
+        ANCHORS_TO_PREFIX_TABLE,
+        PROBES_TO_PREFIX_TABLE,
+        TARGET_TO_LANDMARKS_PING_TABLE,
+    ]
+
+    file_paths = [
+        PROBES_TO_ANCHORS_PING_FILE,
+        ANCHORS_TO_PREFIX_FILE,
+        PROBES_TO_PREFIX_FILE,
+        TARGET_TO_LANDMARKS_PING_FILE,
+    ]
+
+    clickhouse_driver = Clickhouse()
+
+    # create all static tables containing measurement
+    for table, file_path in zip(tables, file_paths):
+
+        query = clickhouse_driver.insert_into_query(table, file_path)
+        clickhouse_driver.execute(query)
+
+        
+    # create table
+
 
 # def insert_results
 # def create_tables
