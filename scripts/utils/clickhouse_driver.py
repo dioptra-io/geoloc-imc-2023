@@ -27,6 +27,7 @@ class ClickhouseDriver:
         self.database = database
         self.user = user
         self.password = password
+        self.client_path = client_path
 
         self.client: Client = Client(
             host=self.host, user=self.user, password=self.password
@@ -69,7 +70,7 @@ class ClickhouseDriver:
     def insert_file(self, query: str) -> None:
         """execute clickhouse insert query as not supported by clickhouse-driver"""
         cmd = [
-            str(CLICKHOUSE_CLIENT_PATH),
+            str(self.client_path),
             "client",
             f"--query={query}",
         ]

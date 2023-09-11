@@ -10,11 +10,10 @@
 *.dat
 *.txt
 
+datasets/
 clickhouse/ch_data/
 clickhouse/ch_logs/
 clickhouse/clickhouse
-
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
