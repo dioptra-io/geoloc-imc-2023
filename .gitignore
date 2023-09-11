@@ -11,9 +11,9 @@
 *.txt
 
 datasets/
-clickhouse/ch_data/
-clickhouse/ch_logs/
-clickhouse/clickhouse
+clickhouse_files/data/
+clickhouse_files/logs/
+clickhouse_files/clickhouse
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

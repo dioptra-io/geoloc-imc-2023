@@ -14,7 +14,7 @@ from default import (
 )
 
 
-class ClickhouseDriver:
+class Clickhouse:
     def __init__(
         self,
         host: str = CLICKHOUSE_HOST,

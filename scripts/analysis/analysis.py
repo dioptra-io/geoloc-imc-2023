@@ -8,7 +8,7 @@ from clickhouse_driver import Client
 from ipaddress import ip_network
 
 from scripts.utils.file_utils import load_json
-from scripts.utils.clickhouse_driver import ClickhouseDriver
+from scripts.utils.clickhouse import Clickhouse
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
 from logger import logger
 from scripts.utils.helpers import (
@@ -278,7 +278,7 @@ def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
     """
     Compute the guessed geolocation of the targets
     """
-    clickhouse_wrapper = ClickhouseDriver(
+    clickhouse_wrapper = Clickhouse(
         host=CLICKHOUSE_HOST,
         database=CLICKHOUSE_DB,
         user=CLICKHOUSE_USER,

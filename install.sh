@@ -4,10 +4,10 @@ docker pull clickhouse/clickhouse-server:22.6
 
 # start the server using docker
 docker run --rm -d \
-    -v ./clickhouse/data:/var/lib/clickhouse/ \
-    -v ./clickhouse/logs:/var/log/clickhouse-server/ \
-    -v ./clickhouse/users.d:/etc/clickhouse-server/users.d:ro \
-    -v ./clickhouse/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh \
+    -v ./clickhouse_files/data:/var/lib/clickhouse/ \
+    -v ./clickhouse_files/logs:/var/log/clickhouse-server/ \
+    -v ./clickhouse_files/users.d:/etc/clickhouse-server/users.d:ro \
+    -v ./clickhouse_files/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh \
     -p 8123:8123 \
     -p 9000:9000 \
     --ulimit nofile=262144:262144 \
@@ -15,7 +15,7 @@ docker run --rm -d \
 
 # download clickhouse client binary
 curl https://clickhouse.com/ | sh
-mv clickhouse ./clickhouse
+mv clickhouse ./clickhouse_files/
 
 # install source files
 poetry lock 

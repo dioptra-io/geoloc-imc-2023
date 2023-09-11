@@ -1,5 +1,5 @@
 """clickhouse client"""
-from scripts.utils.clickhouse_driver import ClickhouseDriver
+from scripts.utils.clickhouse import Clickhouse
 from logger import logger
 
 from default import (
@@ -19,7 +19,7 @@ from default import (
 
 
 if __name__ == "__main__":
-    clickhouse_driver = ClickhouseDriver()
+    clickhouse_driver = Clickhouse()
 
     # create anchors_meshed_table
     query = clickhouse_driver.create_target_ping_tables(ANCHORS_MESHED_PING_TABLE)
