@@ -8,7 +8,7 @@ from clickhouse_driver import Client
 from ipaddress import ip_network
 
 from scripts.utils.file_utils import load_json
-from scripts.utils.clickhouse import Clickhouse
+from scripts.utils.clickhouse_driver import ClickhouseDriver
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
 from logger import logger
 from scripts.utils.helpers import (
@@ -19,10 +19,6 @@ from scripts.utils.helpers import (
     circle_intersections,
     circle_preprocessing,
 )
-from scripts.utils.clickhouse_driver import ClickhouseDriver
-from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
-from logger import logger
-
 from default import (
     SPEED_OF_INTERNET,
     CLICKHOUSE_HOST,
