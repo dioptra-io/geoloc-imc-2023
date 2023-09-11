@@ -12,6 +12,7 @@
 
 clickhouse/ch_data/
 clickhouse/ch_logs/
+clickhouse/clickhouse
 
 
 
