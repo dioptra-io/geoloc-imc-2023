@@ -19,6 +19,10 @@ from scripts.utils.helpers import (
     circle_intersections,
     circle_preprocessing,
 )
+from scripts.utils.clickhouse_driver import ClickhouseDriver
+from scripts.ripe_atlas.atlas_api import get_prefix_from_ip
+from logger import logger
+
 from default import (
     SPEED_OF_INTERNET,
     CLICKHOUSE_HOST,
@@ -278,7 +282,7 @@ def compute_rtts_per_dst_src(table, filter, threshold, is_per_prefix=False):
     """
     Compute the guessed geolocation of the targets
     """
-    clickhouse_wrapper = Clickhouse(
+    clickhouse_wrapper = ClickhouseDriver(
         host=CLICKHOUSE_HOST,
         database=CLICKHOUSE_DB,
         user=CLICKHOUSE_USER,
