@@ -66,23 +66,35 @@ USER_HITLIST_FILE: Path = USER_GENERATED_PATH / "user_parsed_hitlist.json"
 ##################################################################################################
 # CLICKHOUSE SETTINGS                                                                            #
 ##################################################################################################
+CLICKHOUSE_CLIENT_PATH = DEFAULT_DIR / "clickhouse/clickhouse"
 CLICKHOUSE_HOST = "localhost"
 CLICKHOUSE_DB = "geolocation_replication"
 CLICKHOUSE_USER = "default"
 CLICKHOUSE_PASSWORD = ""
 
 ANCHORS_MESHED_PING_TABLE = "anchors_meshed_pings"
-PROBES_TO_ANCHORS_PING_TABLE = "ping_10k_to_anchors"
 ANCHORS_TO_PREFIX_TABLE = "anchors_to_prefix_pings"
 PROBES_TO_PREFIX_TABLE = "probes_to_prefix_pings"
 TARGET_TO_LANDMARKS_PING_TABLE = "targets_to_landmarks_pings"
+PROBES_TO_ANCHORS_PING_TABLE = "ping_10k_to_anchors"
+ANCHORS_MESHED_TRACEROUTE_TABLE = "anchors_meshed_traceroutes"
 
-CLICKHOUSE_STATIC_DATASET: Path = DEFAULT_DIR / "datasets/clickhouse_data" 
+CLICKHOUSE_STATIC_DATASET: Path = DEFAULT_DIR / "datasets/clickhouse_data"
 
-PROBES_TO_ANCHORS_PING_FILE = CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_MESHED_PING_TABLE}.zst"
-ANCHORS_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{PROBES_TO_ANCHORS_PING_TABLE}.zst"
-PROBES_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_TO_PREFIX_TABLE}.zst"
-TARGET_TO_LANDMARKS_PING_FILE = CLICKHOUSE_STATIC_DATASET / f"{TARGET_TO_LANDMARKS_PING_TABLE}.zst"
+ANCHORS_MESHED_PING_FILE = (
+    CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_MESHED_PING_TABLE}.zst"
+)
+ANCHORS_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_TO_PREFIX_TABLE}.zst"
+PROBES_TO_PREFIX_FILE = CLICKHOUSE_STATIC_DATASET / f"{PROBES_TO_PREFIX_TABLE}.zst"
+TARGET_TO_LANDMARKS_PING_FILE = (
+    CLICKHOUSE_STATIC_DATASET / f"{TARGET_TO_LANDMARKS_PING_TABLE}.zst"
+)
+PROBES_TO_ANCHORS_PING_FILE = (
+    CLICKHOUSE_STATIC_DATASET / f"{PROBES_TO_ANCHORS_PING_TABLE}.zst"
+)
+ANCHORS_MESHED_TRACEROUTE_FILE = (
+    CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_MESHED_TRACEROUTE_TABLE}.zst"
+)
 
 
 ##################################################################################################
