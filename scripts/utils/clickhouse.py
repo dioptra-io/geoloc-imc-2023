@@ -10,7 +10,7 @@ from default import (
     CLICKHOUSE_DB,
     CLICKHOUSE_USER,
     CLICKHOUSE_PASSWORD,
-    CLICKHOUSE_CLIENT_PATH,
+    CLICKHOUSE_CLIENT,
 )
 
 
@@ -21,7 +21,7 @@ class Clickhouse:
         database: str = CLICKHOUSE_DB,
         user: str = CLICKHOUSE_USER,
         password: str = CLICKHOUSE_PASSWORD,
-        client_path: Path = CLICKHOUSE_CLIENT_PATH,
+        client_path: Path = CLICKHOUSE_CLIENT,
     ) -> None:
         self.host = host
         self.database = database
@@ -150,4 +150,26 @@ class Clickhouse:
         ) 
         ENGINE=MergeTree() 
         ORDER BY (dst_prefix, dst_ip, src_ip, reply_ip)
+        """
+
+    def create_street_level_table(self, table_name: str) -> str:
+        """create the street level traceroute table"""
+
+        return f"""
+        CREATE TABLE IF NOT EXISTS {self.database}.{table_name} 
+        (
+        `src_addr` String, 
+        `dst_prefix` String, 
+        `dst_addr` String, 
+        `resp_addr` String, 
+        `proto` Int16, 
+        `hop` Int16, 
+        `rtt` Float64, 
+        `ttl` Int16, 
+        `prb_id` Int64, 
+        `msm_id` Int64,
+        `tstamp` Datetime('UTC')
+        )
+        ENGINE = MergeTree()
+        ORDER BY (dst_addr, src_addr, tstamp)
         """

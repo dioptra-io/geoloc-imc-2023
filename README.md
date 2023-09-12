@@ -30,21 +30,41 @@ Note: Most measurement requires a [RIPE Atlas] account, the platform we used to 
 
 ## [Installation](#installation)
 
+### [Download datasets](#download-datasets)
+
+To reproduce our experiences analysis, you can download all necessary files with:
+```bash
+curl -? <some_url_towards_an_uninexting_ftp> # TODO: ftp arborescence
+```
+TODO: explain which files are being downloaded (their purpose) and where to set them.
 
 ### [Requirements](#requirements)
 
 - [Python3.9](https://www.python.org/downloads/) (or above)
 - [Poetry](https://python-poetry.org/docs/)
-- [Clickhouse](https://clickhouse.com/docs/en/install) (optional for measurements?)
+- [Docker](https://docs.docker.com/engine/install/)
 
-### [Install source files](#install-source-files)
-
-Clone the repository:
+### [Clone the reprository](#clone_the_reprository)
 
 ```bash
 git clone https://github.com/dioptra-io/geoloc-imc-2023.git
 cd geoloc-imc-2023
 ```
+
+### [Installer](#installer)
+
+You can use the script **install.sh** to:
+- Pull the clickhouse docker image.
+- Start the clickhouse server.
+- Install python project using poetry.
+- Create all tables and populate the database with our measurements.
+
+```bash
+source install.sh
+```
+If the installation fails, all necessary steps to use geoScale are described below.
+
+### [Install source files](#install-source-files)
 
 GeoScale uses poetry has dependency manager, install the project using:
 ```bash
@@ -53,71 +73,87 @@ poetry lock
 poetry install
 ```
 
-### [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
+### [Clickhouse](#clickhouse)
 
-1. set these env variables within a .env file at the root directory of the projects:
+We use docker to run clickhouse server, by default server is listening on localhost on port 8123 and tcp9000. If you prefer using your own docker configuration, please also modify [default.py](#)
+```bash
+
+# pull the docker image
+docker pull clickhouse/clickhouse-server:22.6
+
+# start the server
+docker run --rm -d \
+    -v ./clickhouse_files/data:/var/lib/clickhouse/ \
+    -v ./clickhouse_files/logs:/var/log/clickhouse-server/ \
+    -v ./clickhouse_files/users.d:/etc/clickhouse-server/users.d:ro \
+    -v ./clickhouse_files/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh \
+    -p 8123:8123 \
+    -p 9000:9000 \
+    --ulimit nofile=262144:262144 \
+    clickhouse/clickhouse-server:22.6
+```
+
+You can either install [clickhouse-client](#https://clickhouse.com/docs/en/install) or download clikhouse client binary (by default, [install.sh](#) download binary file).
+```bash
+curl https://clickhouse.com/ | sh
+mv clickhouse ./clickhouse_files/
+```
+
+Finally, create all necessary tables and populate it with our own measurements with:
+```bash
+python scripts/utils/clickhouse_installer.py 
+```
+
+
+### [Setttings](#settings)
+
+Our tool relies on ENV variables for configuring Clickhouse or interracting with RIPE Atlas API.
+An example of necessary ENV variables is given in [.env.example](#). Create your own
+env file with following values:
 ```.env
-RIPE_USERNAME=<your_username>
-RIPE_SECRET_KEY=<your_secret_key>
-```
-2. Export directly with:
-```bash
-export RIPE_USERNAME=<your_username>
-export RIPE_SECRET_KEY=<your_secret_key>
+RIPE_USERNAME=
+RIPE_SECRET_KEY=
 ```
 
-### Clickhouse
-
-TODO: explain setup + insert results files + credentials.
-
-### [Download datasets](#download-datasets)
-
-
-As mentionned GeoScale can be used to reproduce our results. You can download our measurement using:
-
-```bash
-curl -? <some_url_towards_an_uninexting_ftp> # TODO: ftp arborescence
+⚠️ **IF** you used, your own clickhouse configuration, you can modify the following ENV:
 ```
-
-
+# clickhouse settings
+CLICKHOUSE_CLIENT=
+CLICKHOUSE_HOST=
+CLICKHOUSE_DB=
+CLICKHOUSE_USER=
+CLICKHOUSE_PASSWORD=
+```
 ### [Further notice](#notice)
 
 #### Test environement
 
-All codes and scripts have been tested on: 
-- CentOS (version)
-- Coer?
-- RAM?
-- etc.
-
-⚠️ Some scripts and analysis are heavy consumers, some lasting for hours potentially. Make sure that your configuration is sufficiently robust.
-
-#### Windows
-
-Furthermore, Linux is recommended but not mandatory.  
-If you use Windows, you might have problems with the Windows path while using pyasn.  
-You also have something to change in the section "Get population data" of create_datasets.ipynb.
-
-## [Publication results analysis](#publication-results-analysis)
+The project has been tested on:
+- CentOS v.X.X.X
+- MacOs vY.Y.Y
+- Ubuntu?
 
 
-Option 2 : Only do the analysis
-- analysis/million_scale.ipynb
-- analysis/tables.ipynb
-- plot/plot.ipynb
+⚠️ Some scripts and analysis are heavy consumers, some lasting for hours. Make sure that your configuration is sufficiently robust.
 
-Move the measurement to the right directory
 
-Finnally, you can run:
-- this notebook for million scale results analysis
-- this notebook for street level results analysis
+## [Reproduction](#publication-results-analysis)
 
-Both notebooks provides results and figures.
+You can reproduce our experimentation with the two notebooks in /analysis:
+- [anaysis/million_scale.ipynb](#)
+- [analysis/street_level.ipynb](#)
 
-TODO : setup processor used number when running some scripts.  
+Both notebooks will generate all result files necessary for producing all the
+figures published in the paper. You can plot them by running the jupyter notebook:
+- [plot/plot.ipynb](#)
+
+Finally, tables can be generated using jupyter notebook:
+- [tables/tables.ipynb](#)
 
 
 ## [Run your own measurements](#run-your-own-measurements)
+
+TODO:
 
 Option 1 : Do your own measurements
 - datasets/create_datasets.ipynb

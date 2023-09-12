@@ -49,6 +49,8 @@ if __name__ == "__main__":
     query = clickhouse_driver.create_traceroutes_table(ANCHORS_MESHED_TRACEROUTE_TABLE)
     clickhouse_driver.execute(query)
 
+    query = create_street_level_table
+
     # table names
     tables = [
         ANCHORS_MESHED_TRACEROUTE_TABLE,

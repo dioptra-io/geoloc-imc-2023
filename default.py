@@ -66,7 +66,7 @@ USER_HITLIST_FILE: Path = USER_GENERATED_PATH / "user_parsed_hitlist.json"
 ##################################################################################################
 # CLICKHOUSE SETTINGS                                                                            #
 ##################################################################################################
-CLICKHOUSE_CLIENT_PATH = DEFAULT_DIR / "clickhouse_files/clickhouse"
+CLICKHOUSE_CLIENT = DEFAULT_DIR / "clickhouse_files/clickhouse"
 CLICKHOUSE_HOST = "localhost"
 CLICKHOUSE_DB = "geolocation_replication"
 CLICKHOUSE_USER = "default"
