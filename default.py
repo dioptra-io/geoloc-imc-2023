@@ -1,4 +1,4 @@
-# All the reference paths to storing files are here. There are also some constants and information for the clickhouse database and Ripe Atlas API.
+"""All the reference paths to storing files settings and constants"""
 
 from pathlib import Path
 
@@ -72,13 +72,25 @@ CLICKHOUSE_DB = "geolocation_replication"
 CLICKHOUSE_USER = "default"
 CLICKHOUSE_PASSWORD = ""
 
+# tables to store reproduction results
 ANCHORS_MESHED_PING_TABLE = "anchors_meshed_pings"
 ANCHORS_TO_PREFIX_TABLE = "anchors_to_prefix_pings"
 PROBES_TO_PREFIX_TABLE = "probes_to_prefix_pings"
 TARGET_TO_LANDMARKS_PING_TABLE = "targets_to_landmarks_pings"
 PROBES_TO_ANCHORS_PING_TABLE = "ping_10k_to_anchors"
 ANCHORS_MESHED_TRACEROUTE_TABLE = "anchors_meshed_traceroutes"
+STREET_LEVEL_TRACEROUTES_TABLE = "street_lvl_traceroutes"
 
+# tables to store user measurements
+USER_ANCHORS_MESHED_PING_TABLE = "user_anchors_meshed_pings"
+USER_ANCHORS_TO_PREFIX_TABLE = "user_anchors_to_prefix_pings"
+USER_PROBES_TO_PREFIX_TABLE = "user_probes_to_prefix_pings"
+USER_TARGET_TO_LANDMARKS_PING_TABLE = "user_targets_to_landmarks_pings"
+USER_PROBES_TO_ANCHORS_PING_TABLE = "user_ping_10k_to_anchors"
+USER_ANCHORS_MESHED_TRACEROUTE_TABLE = "user_anchors_meshed_traceroutes"
+USER_STREET_LEVEL_TRACEROUTES_TABLE = "user_street_lvl_traceroutes"
+
+# reproduction results files
 CLICKHOUSE_STATIC_DATASET: Path = DEFAULT_DIR / "datasets/clickhouse_data"
 
 ANCHORS_MESHED_PING_FILE = (
@@ -94,6 +106,9 @@ PROBES_TO_ANCHORS_PING_FILE = (
 )
 ANCHORS_MESHED_TRACEROUTE_FILE = (
     CLICKHOUSE_STATIC_DATASET / f"{ANCHORS_MESHED_TRACEROUTE_TABLE}.zst"
+)
+STREET_LEVEL_TRACEROUTES_FILE = (
+    CLICKHOUSE_STATIC_DATASET / f"{STREET_LEVEL_TRACEROUTES_TABLE}.zst"
 )
 
 
@@ -170,11 +185,12 @@ MEASUREMENT_CONFIG_PATH: Path = (
 )
 
 ############## MILLION SCALE FILES
-TARGET_ANCHOR: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_anchor.json"
-TARGET_PROBE: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_probe.json"
-TARGET_ALL_VP: Path = MEASUREMENTS_MILLION_SCALE_PATH / "target_all_vp.json"
-PREFIX_ANCHOR: Path = MEASUREMENTS_MILLION_SCALE_PATH / "prefix_anchor.json"
-PREFIX_PROBE: Path = MEASUREMENTS_MILLION_SCALE_PATH / "prefix_probe.json"
+PREFIX_MEASUREMENT_RESULTS: Path = (
+    MEASUREMENTS_MILLION_SCALE_PATH / "prefix_measurement_results.json"
+)
+TARGET_MEASUREMENT_RESULTS: Path = (
+    MEASUREMENTS_MILLION_SCALE_PATH / "target_measurement_results.json"
+)
 
 ############## STREET LEVEL FILES
 ANALYZABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
@@ -183,17 +199,17 @@ ANALYZABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
 ##################################################################################################
 # FIGURES FILES                                                                                  #
 ##################################################################################################
-PDF_PATH: Path = DEFAULT_DIR / "plot/pdf/"
-GEO_DATABASE_FILE: Path = PDF_PATH / "geo_databases.pdf"
-ACCURACY_VS_NB_VPS_FILE: Path = PDF_PATH / "accuracy_vs_n_vps_probes.pdf"
-ACCURACY_VS_SUBSET_SIZES_FILE: Path = PDF_PATH / "accuracy_vs_subset_sizes.pdf"
-CBG_THRESHOLD_PROBES_FILE: Path = PDF_PATH / "cbg_thresholds_probes.pdf"
-CBG_THRESHOLD_VP_SELECTION_FILE: Path = PDF_PATH / "cbg_thresholds_vp_selection.pdf"
-CBG_THRESHOLD_CONTINENT_FILE: Path = PDF_PATH / "cbg_thresholds_continent.pdf"
-ROUND_ALGORITHM_ERROR_FILE: Path = PDF_PATH / "round_algorithm_error.pdf"
-CLOSE_LANDMARK_FILE: Path = PDF_PATH / "cdf_close_landmark_check_log.pdf"
-INVALID_RTT_FILE: Path = PDF_PATH / "invalid_rtt.pdf"
-TIME_TO_GEOLOCATE_FILE: Path = PDF_PATH / "cdf_time_to_geolocate.pdf"
-SCATTER_DISTANCE_FILE: Path = PDF_PATH / "scatter_md_vs_d.pdf"
-SCATTER_DENSITY_FILE: Path = PDF_PATH / "scatter_density.pdf"
-CDF_DENSITY_FILE: Path = PDF_PATH / "cdf_density.pdf"
+FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/"
+GEO_DATABASE_FILE: Path = FIGURE_PATH / "geo_databases.pdf"
+ACCURACY_VS_NB_VPS_FILE: Path = FIGURE_PATH / "accuracy_vs_n_vps_probes.pdf"
+ACCURACY_VS_SUBSET_SIZES_FILE: Path = FIGURE_PATH / "accuracy_vs_subset_sizes.pdf"
+CBG_THRESHOLD_PROBES_FILE: Path = FIGURE_PATH / "cbg_thresholds_probes.pdf"
+CBG_THRESHOLD_VP_SELECTION_FILE: Path = FIGURE_PATH / "cbg_thresholds_vp_selection.pdf"
+CBG_THRESHOLD_CONTINENT_FILE: Path = FIGURE_PATH / "cbg_thresholds_continent.pdf"
+ROUND_ALGORITHM_ERROR_FILE: Path = FIGURE_PATH / "round_algorithm_error.pdf"
+CLOSE_LANDMARK_FILE: Path = FIGURE_PATH / "cdf_close_landmark_check_log.pdf"
+INVALID_RTT_FILE: Path = FIGURE_PATH / "invalid_rtt.pdf"
+TIME_TO_GEOLOCATE_FILE: Path = FIGURE_PATH / "cdf_time_to_geolocate.pdf"
+SCATTER_DISTANCE_FILE: Path = FIGURE_PATH / "scatter_md_vs_d.pdf"
+SCATTER_DENSITY_FILE: Path = FIGURE_PATH / "scatter_density.pdf"
+CDF_DENSITY_FILE: Path = FIGURE_PATH / "cdf_density.pdf"
