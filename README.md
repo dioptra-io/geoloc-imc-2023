@@ -1,19 +1,21 @@
-#  🗺️ GeoScale — Towards a Publicly Available Internet scale IP Geolocation Dataset: a Replication Study
-GeoScale provides code for reproducing two IP addresses geolocation techniques using active measurements on
+#  🗺️ Replication: Towards a Publicly Available Internet scale IP Geolocation Dataset (IMC 2023)
+This repository contains the code needed to reproduce and replicate our results in our [IMC 2023 paper](). 
 
-1. [Million Scale paper](https://dl.acm.org/doi/abs/10.1145/2398776.2398790?casa_token=8VDXwdGxNbAAAAAA:Aj5Sob6bUjhA0PX4fwtc_5uYZqFQv6iVRH8d_eoW98FA-fdjIJilue0NjZrMEcIimuAF9jeywJr_gQ): Internet scale geolocation technique, large dataset.
+Our study replicates the methodology of two papers that obtained outstanding results on geolocating IP addresses in terms of coverage and accuracy in nowadays Internet on the largest publicly available measurement platform, RIPE Atlas. 
+These two papers are: 
 
-2. [Street level paper](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf): Highly precise technique, on reduced dataset.
+1. [Towards geolocation of millions of IP addresses (IMC 2012)](https://dl.acm.org/doi/abs/10.1145/2398776.2398790)
 
-This project is part of a reproducibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
+2. [Towards Street-Level Client-Independent IP Geolocation (NSDI 2011)](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf).
 
-This repository offers the possibility to: 
-1. reproduce our results "offline" by using our own measurement datasets.
-2. run experiments on user defined set of targets and vantage points.
+Our code offers the possibility to: 
+1. reproduce our results using our measurement datasets.
+2. replicate our methodology with different targets and vantage points. For now, only RIPE Atlas vantage points are supported, but it should not be difficult to adapt the code to handle other vantage points and targets. 
 
-Note: Most measurement requires a [RIPE Atlas](https://access.ripe.net/registration) account, the platform we used to run our geolocation measurements.
+## Prerequisites
+Our code performs measurements on RIPE Atlas, so be sure to have an account if you want to replicate our methodology with your own RIPE Atlas measurements.
 
-⚠️ **Measurements on large datasets cost a lot of resources**, be careful when running any measurements.
+⚠️ **To replicate our RIPE Atlas measurements, you will need a lot of credits (millions)**. 
 
 
 ## Table of contents
