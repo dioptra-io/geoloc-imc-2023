@@ -8,6 +8,8 @@ These two papers are:
 
 2. [Towards Street-Level Client-Independent IP Geolocation (NSDI 2011)](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf).
 
+They are called million scale and street level papers throughout this README, as done in our paper. 
+
 Our code offers the possibility to: 
 1. reproduce our results using our measurement datasets.
 2. replicate our methodology with different targets and vantage points. For now, only RIPE Atlas vantage points are supported, but it should not be difficult to adapt the code to handle other vantage points and targets. 
@@ -135,23 +137,19 @@ CLICKHOUSE_PASSWORD=
 
 #### Test environment
 
-The project has been tested on:
-- CentOS v.X.X.X
-- MacOs vY.Y.Y
-- Ubuntu?
+The project has been run on:
+- CentOS 7.5
+- Python 3.9
+- Server with 64GB RAM, 32 cores.
+  
+⚠️ Some scripts and analysis can use a lot of CPU and RAM (tens of GB) and last for hours.
 
 
-⚠️ Some scripts and analysis are heavy consumers, some lasting for hours. Make sure that your configuration is sufficiently robust.
+## [Reproducing our results](#reproduction)
 
-
-## [Reproduction](#reproduction)
-
-We provide python scripts and jupyter notebooks to re-create results files for the two papers reproduced.
+We provide python scripts and jupyter notebooks to reproduce the results and the graphs that we got in replicating the million scale and the street level papers.
 
 ### Million Scale
-
-Street-level reproduction relies on results calculated by the million scale technique. That is why you need to run theses scripts **before** running those
-of street-level. 
 
 You can reproduce Million scale results using a jupyter notebook: [million_scale.ipynb](./analysis/million_scale.ipynb)
 
@@ -164,10 +162,13 @@ All analysis results can be found in **./analysis/results**
 
 ### Street level
 
-No additional steps are necessary to reproduce the street-level experiment. You can directly
-use notebooks [plot.ipynb](./analysis/plot.ipynb) (to produce figures) and [tables.ipynb](./analysis/tables.ipynb) (to produce figures)
+⚠️ The tier 1 of the Street-level replication (See the paper for more details) relies on results calculated by the million scale technique. You need to run the million scale notebook/scripts **before** running those of street-level. 
 
-**Note**: [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) also produce figures and tables related with the Million scale reproduction.
+No additional steps are necessary to reproduce the street-level experiment.
+
+### Generating figures
+
+You can directly use notebooks [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) to produce the figures of our paper. 
  
 ## [Run your own measurements](#run-your-own-measurements)
 
