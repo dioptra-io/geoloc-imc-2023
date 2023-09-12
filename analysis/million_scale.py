@@ -35,7 +35,7 @@ if __name__ == "__main__":
         in_clause = f"".join([f",toIPv4('{p}')" for p in filtered_probes])[1:]
         filter += f"AND dst not in ({in_clause}) AND src not in ({in_clause}) "
 
-    logger.info("Compute errors")
+    logger.info("Step 1: Compute errors")
 
     all_probes = load_json(PROBES_AND_ANCHORS_FILE)
     (
@@ -65,9 +65,9 @@ if __name__ == "__main__":
         vp_distance_matrix=vp_distance_matrix,
     )
 
-    logger.info("Compute errors")
-
     dump_json(features, PROBES_TO_ANCHORS_RESULT_FILE)
+
+    logger.info("Step 2: Round Algorithm")
 
     all_probes = load_json(PROBES_AND_ANCHORS_FILE)
 

@@ -8,10 +8,10 @@ GeoScale provides code for reproducing two IP addresses geolocation techniques u
 This project is part of a reproducibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
 
 This repository offers the possibility to: 
-- reproduce our results "offline" by using our own measurement datasets.
-- run experiments on user defined set of targets and vantage points.
+1. reproduce our results "offline" by using our own measurement datasets.
+2. run experiments on user defined set of targets and vantage points.
 
-Note: Most measurement requires a [RIPE Atlas] account, the platform we used to run our geolocation measurements.
+Note: Most measurement requires a [RIPE Atlas](https://access.ripe.net/registration) account, the platform we used to run our geolocation measurements.
 
 ⚠️ **Measurements on large datasets cost a lot of resources**, be careful when running any measurements.
 
@@ -20,23 +20,17 @@ Note: Most measurement requires a [RIPE Atlas] account, the platform we used to 
 
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [Install source files](#install-source-files)
-  - [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
-  - [Clickhouse](#clickhouse)
   - [Download datasets](#download-datasets)
+  - [Clone the repository](#clone-the-repository)
+  - [Installer](#installer)
+  - [Install source files](#install-source-files)
+  - [Clickhouse](#clickhouse)
+  - [Settings](#settings)
   - [Further notice](#further-notice)
-- [Publication results analysis](#publication-results-analysis)
+- [Reproduction](#reproduction)
 - [Run your own measurements](#run-your-own-measurements)
 
 ## [Installation](#installation)
-
-### [Download datasets](#download-datasets)
-
-To reproduce our experiences analysis, you can download all necessary files with:
-```bash
-curl -? <some_url_towards_an_uninexting_ftp> # TODO: ftp arborescence
-```
-TODO: explain which files are being downloaded (their purpose) and where to set them.
 
 ### [Requirements](#requirements)
 
@@ -44,7 +38,17 @@ TODO: explain which files are being downloaded (their purpose) and where to set 
 - [Poetry](https://python-poetry.org/docs/)
 - [Docker](https://docs.docker.com/engine/install/)
 
-### [Clone the reprository](#clone_the_reprository)
+
+### [Download datasets](#download-datasets)
+
+To reproduce our experiences analysis, you can download all necessary files with:
+```bash
+curl -? <some_url_towards_ftp> # TODO: ftp arborescence
+# all files necessary are located in /srv/hugo/geoloc-imc-2023
+```
+TODO: explain which files are being downloaded (their purpose) and where to set them.
+
+### [Clone the reprository](#clone-the-repository)
 
 ```bash
 git clone https://github.com/dioptra-io/geoloc-imc-2023.git
@@ -56,13 +60,14 @@ cd geoloc-imc-2023
 You can use the script **install.sh** to:
 - Pull the clickhouse docker image.
 - Start the clickhouse server.
+- Download clickhouse-client binary.
 - Install python project using poetry.
 - Create all tables and populate the database with our measurements.
 
 ```bash
 source install.sh
 ```
-If the installation fails, all necessary steps to use geoScale are described below.
+If the installation fails, all necessary steps to use the project are described below.
 
 ### [Install source files](#install-source-files)
 
@@ -75,7 +80,7 @@ poetry install
 
 ### [Clickhouse](#clickhouse)
 
-We use docker to run clickhouse server, by default server is listening on localhost on port 8123 and tcp9000. If you prefer using your own docker configuration, please also modify [default.py](#)
+We use docker to run clickhouse server, by default server is listening on localhost on port 8123 and tcp9000. If you prefer using your own docker configuration, please also modify [default.py](default.py)
 ```bash
 
 # pull the docker image
@@ -93,7 +98,7 @@ docker run --rm -d \
     clickhouse/clickhouse-server:22.6
 ```
 
-You can either install [clickhouse-client](#https://clickhouse.com/docs/en/install) or download clikhouse client binary (by default, [install.sh](#) download binary file).
+You can either install [clickhouse-client](https://clickhouse.com/docs/en/install) or download clikhouse client binary (by default, [install.sh](install.sh) download binary file).
 ```bash
 curl https://clickhouse.com/ | sh
 mv clickhouse ./clickhouse_files/
@@ -107,8 +112,8 @@ python scripts/utils/clickhouse_installer.py
 
 ### [Setttings](#settings)
 
-Our tool relies on ENV variables for configuring Clickhouse or interracting with RIPE Atlas API.
-An example of necessary ENV variables is given in [.env.example](#). Create your own
+Our tool relies on ENV variables for configuring clickhouse or interacting with RIPE Atlas API.
+An example of necessary ENV variables is given in [.env.example](.env.example). Create your own
 env file with following values:
 ```.env
 RIPE_USERNAME=
@@ -126,7 +131,7 @@ CLICKHOUSE_PASSWORD=
 ```
 ### [Further notice](#notice)
 
-#### Test environement
+#### Test environment
 
 The project has been tested on:
 - CentOS v.X.X.X
@@ -137,20 +142,31 @@ The project has been tested on:
 ⚠️ Some scripts and analysis are heavy consumers, some lasting for hours. Make sure that your configuration is sufficiently robust.
 
 
-## [Reproduction](#publication-results-analysis)
+## [Reproduction](#reproduction)
 
-You can reproduce our experimentation with the two notebooks in /analysis:
-- [anaysis/million_scale.ipynb](#)
-- [analysis/street_level.ipynb](#)
+We provide python scripts and jupyter notebooks to re-create results files for the two papers reproduced.
 
-Both notebooks will generate all result files necessary for producing all the
-figures published in the paper. You can plot them by running the jupyter notebook:
-- [plot/plot.ipynb](#)
+### Million Scale
 
-Finally, tables can be generated using jupyter notebook:
-- [tables/tables.ipynb](#)
+Street-level reproduction relies on results calculated by the million scale technique. That is why you need to run theses scripts **before** running those
+of street-level. 
 
+You can reproduce Million scale results using a jupyter notebook: [million_scale.ipynb](./analysis/million_scale.ipynb)
 
+Alternatively you can also use the python script in background, as some steps are vey long to execute (several hours):
+```bash
+nohup python analysis/million_scale.py > output.log &
+```
+
+All analysis results can be found in **./analysis/results**
+
+### Street level
+
+No additional steps are necessary to reproduce the street-level experiment. You can directly
+use notebooks [plot.ipynb](./analysis/plot.ipynb) (to produce figures) and [tables.ipynb](./analysis/tables.ipynb) (to produce figures)
+
+**Note**: [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) also produce figures and tables related with the Million scale reproduction.
+ 
 ## [Run your own measurements](#run-your-own-measurements)
 
 TODO:
