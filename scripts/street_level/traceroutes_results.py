@@ -7,7 +7,7 @@ from clickhouse_driver import Client
 from scripts.utils.file_utils import load_json
 from scripts.ripe_atlas.ping_and_traceroute_classes import TRACEROUTE
 from scripts.ripe_atlas.atlas_api import fetch_traceroutes_from_measurement_ids_no_csv
-from default import ANCHORS_FILE
+from default import USER_ANCHORS_FILE
 
 
 def start_traceroutes_to_targets(targets, probes):
@@ -94,7 +94,7 @@ def multi_traceroutes(targets, probes):
 
 def tier_1_performe_traceroutes(target_ip):
     # Traceroute from every VP to the target
-    probes = load_json(ANCHORS_FILE)
+    probes = load_json(USER_ANCHORS_FILE)
     multi_traceroutes([[target_ip]], probes)
 
 
@@ -121,7 +121,7 @@ def get_circles_to_target(target_ip):
             dict_rtt[hop[0]] = (hop[1], hop[2])
 
     # From IPs get Geolocation given by RIPE Atlas
-    probes_data = load_json(ANCHORS_FILE)
+    probes_data = load_json(USER_ANCHORS_FILE)
     dict_probe_info = {}
     for probe in probes_data:
         if probe["address_v4"] == target_ip:
@@ -191,7 +191,7 @@ def get_rtt_diff(probe_ip, target_ip, landmark_ip):
 
 
 def get_probes_to_use_for_circles(circles):
-    probes_data = load_json(ANCHORS_FILE)
+    probes_data = load_json(USER_ANCHORS_FILE)
     lats_lons = {}
     for circle in circles:
         lats_lons[(circle[0], circle[1])] = circle

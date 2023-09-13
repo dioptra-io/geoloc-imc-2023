@@ -1,6 +1,7 @@
 """functions for running measurements"""
 import random
 
+from datetime import datetime
 from uuid import UUID
 from pathlib import Path
 
@@ -10,7 +11,6 @@ from scripts.ripe_atlas.atlas_api import get_prefix_from_ip, get_measurements_fr
 from scripts.ripe_atlas.ping_and_traceroute_classes import PING
 
 from default import (
-    MEASUREMENT_CONFIG_PATH,
     PREFIX_MEASUREMENT_RESULTS,
     TARGET_MEASUREMENT_RESULTS,
 )
@@ -47,24 +47,52 @@ def load_vps(vps_file_path: Path, nb_vps: int) -> dict:
 
 
 def get_measurement_config(
-    measurement_uuid: UUID, targets: list, vps: dict, dry_run=False
+    experiment_uuid: UUID,
+    prefix_measurement_uuid: UUID,
+    target_measurement_uuid: UUID,
+    targets: list,
+    target_prefixes: list,
+    vps: dict,
+    dry_run=False,
 ) -> dict:
     """return measurement config for future retrieval"""
     return {
-        "UUID": str(measurement_uuid),
+        "experiment_uuid": str(experiment_uuid),
+        "status": "ongoing",
+        "start_time": str(datetime.now()),
+        "end_time": None,
         "is_dry_run": dry_run,
-        "description": "measurement towards all anchors with all anchors as vps",
-        "type": "prefix",
+        "nb_targets": len(targets),
+        "nb_vps": len(vps),
+        "description": "measurements from a set of vps towards all targets/target prefixes",
         "af": 4,
-        "targets": targets,
-        "vps": vps,
+        "target_measurements": {
+            "measurement_uuid": str(target_measurement_uuid),
+            "targets": targets,
+            "vps": vps,
+        },
+        "prefix_measurements": {
+            "measurement_uuid": str(prefix_measurement_uuid),
+            "targets": target_prefixes,
+            "vps": vps,
+        },
     }
 
 
-def save_measurement_config(measurement_config: dict) -> None:
+def save_measurement_config(measurement_config: dict, out_path: Path) -> None:
     """save measurement config"""
 
-    config_file = MEASUREMENT_CONFIG_PATH / f"{measurement_config['UUID']}.json"
+    try:
+        if (
+            measurement_config["prefix_measurements"]["end_time"] is not None
+            and measurement_config["target_measurements"]["end_time"] is not None
+        ):
+            measurement_config["end_time"] = str(datetime.now())
+            measurement_config["status"] = "finished"
+    except KeyError:
+        pass
+
+    config_file = out_path / f"{measurement_config['experiment_uuid']}.json"
     dump_json(measurement_config, config_file)
 
 
@@ -116,9 +144,9 @@ def ping_prefixes(
 
     # measurement for 3 targets in every target prefixes
     (
-        measurement_config["ids"],
-        measurement_config["start_time"],
-        measurement_config["end_time"],
+        measurement_config["prefix_measurements"]["ids"],
+        measurement_config["prefix_measurements"]["start_time"],
+        measurement_config["prefix_measurements"]["end_time"],
     ) = pinger.ping_by_prefix(
         target_prefixes=target_prefixes,
         vps=vps,
@@ -126,8 +154,6 @@ def ping_prefixes(
         tag=measurement_uuid,
         dry_run=dry_run,
     )
-
-    save_measurement_config(measurement_config)
 
 
 def ping_targets(
@@ -164,22 +190,33 @@ def ping_targets(
     )
 
     (
-        measurement_config["ids"],
-        measurement_config["start_time"],
-        measurement_config["end_time"],
+        measurement_config["target_measurements"]["ids"],
+        measurement_config["target_measurements"]["start_time"],
+        measurement_config["target_measurements"]["end_time"],
     ) = pinger.ping_by_target(
         targets=targets, vps=vps, tag=measurement_uuid, dry_run=dry_run
     )
 
-    save_measurement_config(measurement_config)
+
+def get_latest_measurements(config_path: Path) -> dict:
+    """retrieve latest measurement config"""
+    try:
+        assert config_path.is_dir()
+    except AssertionError:
+        logger.error(f"config path is not a dir: {config_path}")
+
+    latest: datetime = None
+    for file in config_path.iterdir():
+        logger.info()
 
 
 def retrieve_results(measurement_config: dict, out_file: Path) -> None:
     """query RIPE Atlas API to retrieve all measurement results"""
 
+    # TODO: make it a loop and save csv
+
     measurement_results = get_measurements_from_tag(str(measurement_config["UUID"]))
 
-    # test that everything is alright
     logger.info(f"nb measurements retrieved: {len(measurement_results)}")
 
     for i, (target_addr, results) in enumerate(measurement_results.items()):
