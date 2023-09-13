@@ -6,24 +6,50 @@ from default import *
 
 if __name__ == "__main__":
     # set to True to use your own datasets/measurements
-    run_repro = True
+    run_repro = False
     if run_repro:
+        # DATASET FILES
         PROBES_FILE = REPRO_PROBES_FILE
         PROBES_AND_ANCHORS_FILE = REPRO_PROBES_AND_ANCHORS_FILE
         FILTERED_PROBES_FILE = REPRO_FILTERED_PROBES_FILE
         GREEDY_PROBES_FILE = REPRO_GREEDY_PROBES_FILE
         PAIRWISE_DISTANCE_FILE = REPRO_PAIRWISE_DISTANCE_FILE
+        VPS_TO_TARGET_TABLE = PROBES_TO_ANCHORS_PING_TABLE
+        VPS_TO_PREFIX_TABLE = PROBES_TO_PREFIX_TABLE
 
-        # TODO: separate user's results from measurement
-        PROBES_TO_ANCHORS_RESULT_FILE = PROBES_TO_ANCHORS_RESULT_FILE
+        # RESULT FILES
+        PROBES_TO_ANCHORS_RESULT_FILE = REPRO_PROBES_TO_ANCHORS_RESULT_FILE
+        ROUND_BASED_ALGORITHM_FILE = REPRO_ROUND_BASED_ALGORITHM_FILE
+        ACCURACY_VS_N_VPS_PROBES_FILE = REPRO_ACCURACY_VS_N_VPS_PROBES_FILE
+        VP_SELECTION_ALGORITHM_PROBES_1_FILE = (
+            REPRO_VP_SELECTION_ALGORITHM_PROBES_1_FILE
+        )
+        VP_SELECTION_ALGORITHM_PROBES_3_FILE = (
+            REPRO_VP_SELECTION_ALGORITHM_PROBES_3_FILE
+        )
+        VP_SELECTION_ALGORITHM_PROBES_10_FILE = (
+            REPRO_VP_SELECTION_ALGORITHM_PROBES_10_FILE
+        )
+
     else:
+        # DATASET FILES
         PROBES_FILE = USER_PROBES_FILE
         PROBES_AND_ANCHORS_FILE = USER_PROBES_AND_ANCHORS_FILE
         FILTERED_PROBES_FILE = USER_FILTERED_PROBES_FILE
         GREEDY_PROBES_FILE = USER_GREEDY_PROBES_FILE
         PAIRWISE_DISTANCE_FILE = USER_PAIRWISE_DISTANCE_FILE
+        VPS_TO_TARGET_TABLE = USER_VPS_TO_TARGET_TABLE
+        VPS_TO_PREFIX_TABLE = USER_VPS_TO_PREFIX_TABLE
 
-        PROBES_TO_ANCHORS_RESULT_FILE = PROBES_TO_ANCHORS_RESULT_FILE
+        # RESULT FILES
+        PROBES_TO_ANCHORS_RESULT_FILE = USER_PROBES_TO_ANCHORS_RESULT_FILE
+        ROUND_BASED_ALGORITHM_FILE = USER_ROUND_BASED_ALGORITHM_FILE
+        ACCURACY_VS_N_VPS_PROBES_FILE = USER_ACCURACY_VS_N_VPS_PROBES_FILE
+        VP_SELECTION_ALGORITHM_PROBES_1_FILE = USER_VP_SELECTION_ALGORITHM_PROBES_1_FILE
+        VP_SELECTION_ALGORITHM_PROBES_3_FILE = USER_VP_SELECTION_ALGORITHM_PROBES_3_FILE
+        VP_SELECTION_ALGORITHM_PROBES_10_FILE = (
+            USER_VP_SELECTION_ALGORITHM_PROBES_10_FILE
+        )
 
     LIMIT = 1000
 
@@ -129,7 +155,7 @@ if __name__ == "__main__":
 
     subset_sizes = []
     subset_sizes.extend([i for i in range(100, 1000, 100)])
-    subset_sizes.extend([i for i in range(1000, 10001, 1000)])
+    # subset_sizes.extend([i for i in range(1000, 10001, 1000)])
 
     rtt_per_srcs_dst = compute_rtts_per_dst_src(
         PROBES_TO_ANCHORS_PING_TABLE, filter, threshold=50
@@ -174,7 +200,7 @@ if __name__ == "__main__":
     rtt_per_srcs_dst = compute_rtts_per_dst_src(ping_table, filter, threshold=70)
 
     for i, n_vp in enumerate(N_VPS_SELECTION_ALGORITHM):
-        vps_per_target, _ = compute_closest_rtt_probes(
+        vps_per_target = compute_closest_rtt_probes(
             rtt_per_srcs_dst_prefix,
             vp_coordinates_per_ip,
             vp_distance_matrix,

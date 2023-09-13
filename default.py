@@ -152,22 +152,48 @@ BGP_PRIFIXES_FILE: Path = STATIC_PATH / "bgp_prefixes.json"
 # ANALYSIS RESULTS FILES                                                                         #
 ##################################################################################################
 
-ANALYSIS_PATH: Path = DEFAULT_DIR / "analysis/results"
-PROBES_TO_ANCHORS_RESULT_FILE: Path = (
-    ANALYSIS_PATH / "cbg_thresholds_probes_to_anchors.json"
+# REPRODUCIBILITY
+REPRO_ANALYSIS_PATH: Path = DEFAULT_DIR / "analysis/results/reproducibility/"
+
+REPRO_PROBES_TO_ANCHORS_RESULT_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "cbg_thresholds_probes_to_anchors.json"
 )
-VP_SELECTION_ALGORITHM_PROBES_1_FILE: Path = (
-    ANALYSIS_PATH / "vp_selection_algorithm_probes_1.json"
+REPRO_VP_SELECTION_ALGORITHM_PROBES_1_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "vp_selection_algorithm_probes_1.json"
 )
-VP_SELECTION_ALGORITHM_PROBES_3_FILE: Path = (
-    ANALYSIS_PATH / "vp_selection_algorithm_probes_3.json"
+REPRO_VP_SELECTION_ALGORITHM_PROBES_3_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "vp_selection_algorithm_probes_3.json"
 )
-VP_SELECTION_ALGORITHM_PROBES_10_FILE: Path = (
-    ANALYSIS_PATH / "vp_selection_algoxrithm_probes_10.json"
+REPRO_VP_SELECTION_ALGORITHM_PROBES_10_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "vp_selection_algoxrithm_probes_10.json"
 )
-ACCURACY_VS_N_VPS_PROBES_FILE: Path = ANALYSIS_PATH / "accuracy_vs_n_vps_probes.json"
-ROUND_BASED_ALGORITHM_FILE: Path = (
-    ANALYSIS_PATH / "round_based_algorithm_error_cdf.json"
+REPRO_ACCURACY_VS_N_VPS_PROBES_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "accuracy_vs_n_vps_probes.json"
+)
+REPRO_ROUND_BASED_ALGORITHM_FILE: Path = (
+    REPRO_ANALYSIS_PATH / "round_based_algorithm_error_cdf.json"
+)
+
+# FROM USER MEASUREMENTS
+USER_ANALYSIS_PATH: Path = DEFAULT_DIR / "analysis/results/user/"
+
+USER_PROBES_TO_ANCHORS_RESULT_FILE: Path = (
+    USER_ANALYSIS_PATH / "cbg_thresholds_probes_to_anchors.json"
+)
+USER_VP_SELECTION_ALGORITHM_PROBES_1_FILE: Path = (
+    USER_ANALYSIS_PATH / "vp_selection_algorithm_probes_1.json"
+)
+USER_VP_SELECTION_ALGORITHM_PROBES_3_FILE: Path = (
+    USER_ANALYSIS_PATH / "vp_selection_algorithm_probes_3.json"
+)
+USER_VP_SELECTION_ALGORITHM_PROBES_10_FILE: Path = (
+    USER_ANALYSIS_PATH / "vp_selection_algoxrithm_probes_10.json"
+)
+USER_ACCURACY_VS_N_VPS_PROBES_FILE: Path = (
+    USER_ANALYSIS_PATH / "accuracy_vs_n_vps_probes.json"
+)
+USER_ROUND_BASED_ALGORITHM_FILE: Path = (
+    USER_ANALYSIS_PATH / "round_based_algorithm_error_cdf.json"
 )
 
 ##################################################################################################
@@ -198,17 +224,49 @@ ANALYZABLE_FILE: Path = MEASUREMENTS_STREET_LEVEL_PATH / "all_res.json"
 ##################################################################################################
 # FIGURES FILES                                                                                  #
 ##################################################################################################
-FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/"
-GEO_DATABASE_FILE: Path = FIGURE_PATH / "geo_databases.pdf"
-ACCURACY_VS_NB_VPS_FILE: Path = FIGURE_PATH / "accuracy_vs_n_vps_probes.pdf"
-ACCURACY_VS_SUBSET_SIZES_FILE: Path = FIGURE_PATH / "accuracy_vs_subset_sizes.pdf"
-CBG_THRESHOLD_PROBES_FILE: Path = FIGURE_PATH / "cbg_thresholds_probes.pdf"
-CBG_THRESHOLD_VP_SELECTION_FILE: Path = FIGURE_PATH / "cbg_thresholds_vp_selection.pdf"
-CBG_THRESHOLD_CONTINENT_FILE: Path = FIGURE_PATH / "cbg_thresholds_continent.pdf"
-ROUND_ALGORITHM_ERROR_FILE: Path = FIGURE_PATH / "round_algorithm_error.pdf"
-CLOSE_LANDMARK_FILE: Path = FIGURE_PATH / "cdf_close_landmark_check_log.pdf"
-INVALID_RTT_FILE: Path = FIGURE_PATH / "invalid_rtt.pdf"
-TIME_TO_GEOLOCATE_FILE: Path = FIGURE_PATH / "cdf_time_to_geolocate.pdf"
-SCATTER_DISTANCE_FILE: Path = FIGURE_PATH / "scatter_md_vs_d.pdf"
-SCATTER_DENSITY_FILE: Path = FIGURE_PATH / "scatter_density.pdf"
-CDF_DENSITY_FILE: Path = FIGURE_PATH / "cdf_density.pdf"
+
+# REPRODUCIBILITY
+REPRO_FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/reproducibility"
+
+REPRO_GEO_DATABASE_FILE: Path = REPRO_FIGURE_PATH / "geo_databases.pdf"
+REPRO_ACCURACY_VS_NB_VPS_FILE: Path = REPRO_FIGURE_PATH / "accuracy_vs_n_vps_probes.pdf"
+REPRO_ACCURACY_VS_SUBSET_SIZES_FILE: Path = (
+    REPRO_FIGURE_PATH / "accuracy_vs_subset_sizes.pdf"
+)
+REPRO_CBG_THRESHOLD_PROBES_FILE: Path = REPRO_FIGURE_PATH / "cbg_thresholds_probes.pdf"
+REPRO_CBG_THRESHOLD_VP_SELECTION_FILE: Path = (
+    REPRO_FIGURE_PATH / "cbg_thresholds_vp_selection.pdf"
+)
+REPRO_CBG_THRESHOLD_CONTINENT_FILE: Path = (
+    REPRO_FIGURE_PATH / "cbg_thresholds_continent.pdf"
+)
+REPRO_ROUND_ALGORITHM_ERROR_FILE: Path = REPRO_FIGURE_PATH / "round_algorithm_error.pdf"
+REPRO_CLOSE_LANDMARK_FILE: Path = REPRO_FIGURE_PATH / "cdf_close_landmark_check_log.pdf"
+REPRO_INVALID_RTT_FILE: Path = REPRO_FIGURE_PATH / "invalid_rtt.pdf"
+REPRO_TIME_TO_GEOLOCATE_FILE: Path = REPRO_FIGURE_PATH / "cdf_time_to_geolocate.pdf"
+REPRO_SCATTER_DISTANCE_FILE: Path = REPRO_FIGURE_PATH / "scatter_md_vs_d.pdf"
+REPRO_SCATTER_DENSITY_FILE: Path = REPRO_FIGURE_PATH / "scatter_density.pdf"
+REPRO_CDF_DENSITY_FILE: Path = REPRO_FIGURE_PATH / "cdf_density.pdf"
+
+# FROM USER MEASUREMENTS
+USER_FIGURE_PATH: Path = DEFAULT_DIR / "analysis/figures/user"
+
+REPRO_GEO_DATABASE_FILE: Path = USER_FIGURE_PATH / "geo_databases.pdf"
+USER_ACCURACY_VS_NB_VPS_FILE: Path = USER_FIGURE_PATH / "accuracy_vs_n_vps_probes.pdf"
+USER_ACCURACY_VS_SUBSET_SIZES_FILE: Path = (
+    USER_FIGURE_PATH / "accuracy_vs_subset_sizes.pdf"
+)
+USER_CBG_THRESHOLD_PROBES_FILE: Path = USER_FIGURE_PATH / "cbg_thresholds_probes.pdf"
+USER_CBG_THRESHOLD_VP_SELECTION_FILE: Path = (
+    USER_FIGURE_PATH / "cbg_thresholds_vp_selection.pdf"
+)
+USER_CBG_THRESHOLD_CONTINENT_FILE: Path = (
+    USER_FIGURE_PATH / "cbg_thresholds_continent.pdf"
+)
+USER_ROUND_ALGORITHM_ERROR_FILE: Path = USER_FIGURE_PATH / "round_algorithm_error.pdf"
+USER_CLOSE_LANDMARK_FILE: Path = USER_FIGURE_PATH / "cdf_close_landmark_check_log.pdf"
+USER_INVALID_RTT_FILE: Path = USER_FIGURE_PATH / "invalid_rtt.pdf"
+USER_TIME_TO_GEOLOCATE_FILE: Path = USER_FIGURE_PATH / "cdf_time_to_geolocate.pdf"
+USER_SCATTER_DISTANCE_FILE: Path = USER_FIGURE_PATH / "scatter_md_vs_d.pdf"
+USER_SCATTER_DENSITY_FILE: Path = USER_FIGURE_PATH / "scatter_density.pdf"
+USER_CDF_DENSITY_FILE: Path = USER_FIGURE_PATH / "cdf_density.pdf"
