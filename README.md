@@ -168,24 +168,38 @@ No additional steps are necessary to reproduce the street-level experiment.
 
 ### Generating figures
 
-You can directly use notebooks [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) to produce the figures of our paper. 
+You can directly use notebooks [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) to produce the figures and tables of our paper. 
  
 ## [Run your own measurements](#run-your-own-measurements)
 
-TODO:
+You can also run your own measurements on custom datasets of targets (anchors) and vantage points (probes).
 
-Option 1 : Do your own measurements
-- datasets/create_datasets.ipynb
-- measurements/anchor_measurements.ipynb
-- measurements/probe_measurements.ipynb
-- measurements/probe_and_anchor_measurements.ipynb
-- measurements/landmark_traceroutes.ipynb
+### First step: generate targets and vantage points datasets
 
-In that case, most of the data will be regenerated while the code is run even though you need few basic files.
-After cloning the repository, unzip the (TROUVER UN NOM 2) folder (ET DIRE OU IL SE TROUVE). It contains 2 subfolders.
-- geography -> cities? to remove? 
-- various -> various what?
-Move these two folders into the dataset folder.
+The jupyter notebook [create_dataset](./datasets/create_datasets.ipynb) will generate:
+- the set of probes (used as vantage points)
+- the set of anchors (used as targets)
+- filter both sets by removing problematic probes (wrongly geolocated for example)
+
+All generated files will be placed in /datasets/user_datasets.
+
+### Second step: run measurements
+
+With [million_scale_measurements.ipynb](./measurements/million_scale_measurements.ipynb), you can select a subset of vantage points and targets and run measurements on RIPE Atlas.
+
+This script will start measurements for:
+  1. towards all targets from all vantage points
+  2. towards 3 responsive addresses for each target from all vantage points
+
+⚠️ These measurements might cost a lot of RIPE Atlas credits and time if you run them on large datasets (default is only 2 targets and 4 vantage points).
+
+### Third step: analyze your results
+
+Perform the analysis by using the same step described previously on your own measurements results and datasets by setting the boolean variable ```repro = True```, at the beginning of [million_scale.ipynb](./analysis/million_scale.ipynb) (or [million_scale.py](./analysis/million_scale.py) if you are using the script).
+
+
+
+TODO: Street level
 
 ## 📚 Publications
 
