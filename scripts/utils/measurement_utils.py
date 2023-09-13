@@ -1,18 +1,23 @@
 """functions for running measurements"""
 import random
+import time
 
 from datetime import datetime
 from uuid import UUID
 from pathlib import Path
+from dateutil import parser
 
 from logger import logger
 from scripts.utils.file_utils import load_json, dump_json
 from scripts.ripe_atlas.atlas_api import get_prefix_from_ip, get_measurements_from_tag
 from scripts.ripe_atlas.ping_and_traceroute_classes import PING
+from scripts.utils.clickhouse import Clickhouse
 
 from default import (
     PREFIX_MEASUREMENT_RESULTS,
     TARGET_MEASUREMENT_RESULTS,
+    USER_VPS_TO_PREFIX_TABLE,
+    USER_VPS_TO_TARGET_TABLE,
 )
 
 
@@ -207,24 +212,119 @@ def get_latest_measurements(config_path: Path) -> dict:
 
     latest: datetime = None
     for file in config_path.iterdir():
-        logger.info()
+        measurement_config = load_json(file)
+        if latest:
+            if latest < parser.isoparse(measurement_config["start_time"]):
+                latest_config = measurement_config
+        else:
+            latest = parser.isoparse(measurement_config["start_time"])
+            latest_config = measurement_config
+
+    return latest_config
 
 
-def retrieve_results(measurement_config: dict, out_file: Path) -> None:
+def retrieve_results(
+    measurement_uuid: str,
+    out_file: Path,
+    nb_targets: int,
+    nb_vps: int,
+    timeout: int = 10 * 60,
+) -> None:
     """query RIPE Atlas API to retrieve all measurement results"""
 
-    # TODO: make it a loop and save csv
+    start_time = time.time()
 
-    measurement_results = get_measurements_from_tag(str(measurement_config["UUID"]))
+    all_results_available = False
+    while not all_results_available or (time.time() - start_time) < timeout:
+        # fetch results on API
+        measurement_results = get_measurements_from_tag(measurement_uuid)
 
-    logger.info(f"nb measurements retrieved: {len(measurement_results)}")
+        logger.info(f"nb measurements retrieved: {len(measurement_results)}")
 
-    for i, (target_addr, results) in enumerate(measurement_results.items()):
-        if i > 10:
+        # if we dont have results for all targets
+        if (
+            len(measurement_results) == nb_targets * nb_vps  # targets
+            or len(measurement_results) == nb_targets * nb_vps * 3  # prefixes
+        ):
+            all_results_available = True
             break
-        logger.info(
-            f"target: {target_addr} | number of measurement retrieved: {len(results)}"
-        )
+        else:
+            time.sleep(5)
 
-    # save results
+    # save results in cache file
     dump_json(measurement_results, out_file)
+
+    return measurement_results
+
+
+def insert_prefix_results(results: list) -> None:
+    """insert prefixes results with CSV value method"""
+    rows = []
+    values_description = (
+        "src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto"
+    )
+    for result in results:
+        try:
+            # parse response
+            src = result["src_addr"]
+            dst = result["dst_addr"]
+            prb_id = result["prb_id"]
+            date = result["timestamp"]
+            sent = result["sent"]
+            rcvd = result["rcvd"]
+            rtts = [rtt["rtt"] for rtt in result["result"]]
+            min = result["min"]
+            mean = result["avg"]
+            msm_id = result["msm_id"]
+            proto = 0
+
+            row = [src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto]
+
+            rows.append(row)
+        except KeyError as e:
+            logger.warning(f"Some measurements does not contain results: {e}")
+
+    clickhouse = Clickhouse()
+    query = clickhouse.insert_from_values_query(
+        USER_VPS_TO_PREFIX_TABLE, values_description
+    )
+    clickhouse.insert_from_values(query, rows)
+
+    logger.info(
+        f"Prefix measurements successfully inserted in table : {USER_VPS_TO_PREFIX_TABLE}"
+    )
+
+
+def insert_target_results(results: list) -> None:
+    """insert prefixes results with CSV value method"""
+    rows = []
+    values_description = (
+        "src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto"
+    )
+    for result in results:
+        # parse response
+        src = result["src_addr"]
+        dst = result["dst_addr"]
+        prb_id = result["prb_id"]
+        date = result["timestamp"]
+        sent = result["sent"]
+        rcvd = result["rcvd"]
+        rtts = [rtt["rtt"] for rtt in result["result"]]
+        min = result["min"]
+        mean = result["avg"]
+        msm_id = result["msm_id"]
+        proto = 0
+
+        row = [src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto]
+
+        rows.append(row)
+
+    clickhouse = Clickhouse()
+    query = clickhouse.insert_from_values_query(
+        USER_VPS_TO_TARGET_TABLE, values_description
+    )
+    clickhouse.insert_from_values(query, rows)
+
+    logger.info(
+        f"Target measurements successfully inserted in table : {USER_VPS_TO_TARGET_TABLE}"
+    )

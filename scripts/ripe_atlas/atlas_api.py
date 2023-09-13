@@ -341,9 +341,7 @@ def get_measurements_from_tag(tag: str) -> dict:
 
     response = get_response(url, max_retry=1, wait_time=1)
 
-    measurement_results = parse_measurements_results(response)
-
-    return measurement_results
+    return response
 
 
 def get_from_atlas(url: str):

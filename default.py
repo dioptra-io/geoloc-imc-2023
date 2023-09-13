@@ -82,11 +82,10 @@ ANCHORS_MESHED_TRACEROUTE_TABLE = "anchors_meshed_traceroutes"
 STREET_LEVEL_TRACEROUTES_TABLE = "street_lvl_traceroutes"
 
 # tables to store user measurements
-USER_ANCHORS_MESHED_PING_TABLE = "user_anchors_meshed_pings"
-USER_ANCHORS_TO_PREFIX_TABLE = "user_anchors_to_prefix_pings"
-USER_PROBES_TO_PREFIX_TABLE = "user_probes_to_prefix_pings"
+USER_VPS_TO_PREFIX_TABLE = "user_vps_to_prefix"
+USER_VPS_TO_TARGET_TABLE = "user_vps_to_target"
+
 USER_TARGET_TO_LANDMARKS_PING_TABLE = "user_targets_to_landmarks_pings"
-USER_PROBES_TO_ANCHORS_PING_TABLE = "user_ping_10k_to_anchors"
 USER_ANCHORS_MESHED_TRACEROUTE_TABLE = "user_anchors_meshed_traceroutes"
 USER_STREET_LEVEL_TRACEROUTES_TABLE = "user_street_lvl_traceroutes"
 

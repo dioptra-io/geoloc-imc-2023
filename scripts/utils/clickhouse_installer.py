@@ -82,24 +82,14 @@ if __name__ == "__main__":
     # CREATE USER MEASUREMENT TABLES                                                                 #
     ##################################################################################################
 
-    query = clickhouse_driver.create_target_ping_tables(USER_ANCHORS_MESHED_PING_TABLE)
+    query = clickhouse_driver.create_target_ping_tables(USER_VPS_TO_TARGET_TABLE)
     clickhouse_driver.execute(query)
-    logger.info(f"table {USER_ANCHORS_MESHED_PING_TABLE} created")
-
-    query = clickhouse_driver.create_target_ping_tables(
-        USER_PROBES_TO_ANCHORS_PING_TABLE
-    )
-    clickhouse_driver.execute(query)
-    logger.info(f"table {USER_PROBES_TO_ANCHORS_PING_TABLE} created")
+    logger.info(f"table {USER_VPS_TO_TARGET_TABLE} created")
 
     # create prefixes ping table
-    query = clickhouse_driver.create_prefixes_ping_tables(USER_ANCHORS_TO_PREFIX_TABLE)
+    query = clickhouse_driver.create_prefixes_ping_tables(USER_VPS_TO_PREFIX_TABLE)
     clickhouse_driver.execute(query)
-    logger.info(f"table {USER_ANCHORS_TO_PREFIX_TABLE} created")
-
-    query = clickhouse_driver.create_prefixes_ping_tables(USER_PROBES_TO_PREFIX_TABLE)
-    clickhouse_driver.execute(query)
-    logger.info(f"table {USER_PROBES_TO_PREFIX_TABLE} created")
+    logger.info(f"table {USER_VPS_TO_PREFIX_TABLE} created")
 
     query = clickhouse_driver.create_prefixes_ping_tables(
         USER_TARGET_TO_LANDMARKS_PING_TABLE
