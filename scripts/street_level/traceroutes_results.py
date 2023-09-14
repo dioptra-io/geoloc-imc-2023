@@ -2,12 +2,11 @@
 
 import time
 
-from clickhouse_driver import Client
-
+from scripts.utils.clickhouse import Clickhouse
 from scripts.utils.file_utils import load_json
 from scripts.ripe_atlas.ping_and_traceroute_classes import TRACEROUTE
 from scripts.ripe_atlas.atlas_api import fetch_traceroutes_from_measurement_ids_no_csv
-from default import USER_ANCHORS_FILE
+from default import USER_ANCHORS_FILE, STREET_LEVEL_TRACEROUTES_TABLE
 
 
 def start_traceroutes_to_targets(targets, probes):
@@ -63,14 +62,10 @@ def get_traceroutes_results(traceroute_ids):
                             )
                         )
                     # We insert traceroute data into the database to be used later
-                    client = Client("127.0.0.1")
-                    client.execute(
-                        f"insert into street_lvl.street_lvl_traceroutes (src_addr, dst_prefix, dst_addr, resp_addr, proto, hop, rtt, ttl, prb_id, msm_id, tstamp) values",
-                        insert_lst,
-                    )
+                    clickhouse_driver = Clickhouse()
+                    query = clickhouse_driver.insert_street_lvl_traceroutes_query(STREET_LEVEL_TRACEROUTES_TABLE)
+                    clickhouse_driver.execute(query, insert_lst)
             except Exception:
-                # print(traceback.format_exc())
-                # print(f"Failed for id {id}")
                 next_to_do.append(id)
         if len(next_to_do) > 0:
             # We wait to try again
@@ -92,21 +87,24 @@ def multi_traceroutes(targets, probes):
     return tmp_res_traceroutes
 
 
-def tier_1_performe_traceroutes(target_ip):
+def tier_1_performe_traceroutes(target_ip, vps=None):
     # Traceroute from every VP to the target
-    probes = load_json(USER_ANCHORS_FILE)
+    if vps == None:
+        probes = load_json(USER_ANCHORS_FILE)
+    else:
+        probes = vps
     multi_traceroutes([[target_ip]], probes)
 
 
-def get_circles_to_target(target_ip):
+def get_circles_to_target(target_ip, vps=None):
     # Get Rtts from all VPs to the targets if traceroutes are already done
-    client = Client("127.0.0.1")
-    select_query = f"select src_addr, rtt, tstamp from street_lvl.street_lvl_traceroutes where resp_addr = '{target_ip}' and dst_addr = '{target_ip}'"
-    res = client.execute(select_query)
+    clickhouse_driver = Clickhouse()
+    query = clickhouse_driver.get_all_rtt_to_dst_address_query(STREET_LEVEL_TRACEROUTES_TABLE, target_ip)
+    res = clickhouse_driver.execute(query)
     # If None we need to lunch traceroutes from every VP to the target
     if len(res) == 0:
-        tier_1_performe_traceroutes(target_ip)
-        res = client.execute(select_query)
+        tier_1_performe_traceroutes(target_ip, vps)
+        res = clickhouse_driver.execute(query)
         if len(res) == 0:
             return []
 
@@ -121,7 +119,10 @@ def get_circles_to_target(target_ip):
             dict_rtt[hop[0]] = (hop[1], hop[2])
 
     # From IPs get Geolocation given by RIPE Atlas
-    probes_data = load_json(USER_ANCHORS_FILE)
+    if vps == None:
+        probes_data = load_json(USER_ANCHORS_FILE)
+    else:
+        probes_data = vps
     dict_probe_info = {}
     for probe in probes_data:
         if probe["address_v4"] == target_ip:
@@ -153,12 +154,12 @@ def get_circles_to_target(target_ip):
 
 
 def get_rtt_diff(probe_ip, target_ip, landmark_ip):
-    client = Client("127.0.0.1")
+    clickhouse_driver = Clickhouse()
+    query = clickhouse_driver.get_all_rtt_from_probe_to_targets_query(STREET_LEVEL_TRACEROUTES_TABLE, probe_ip, target_ip, landmark_ip)
+    res = clickhouse_driver.execute(query)
     rtt_dict_target = {}
     rtt_dict_landmark = {}
-    res = client.execute(
-        f"select resp_addr, dst_addr, rtt from street_lvl.street_lvl_traceroutes where src_addr = '{probe_ip}' and (dst_addr =  '{target_ip}' or dst_addr = '{landmark_ip}')"
-    )
+    
     for l in res:
         resp_ip = l[0]
         dst_ip = l[1]
@@ -190,8 +191,11 @@ def get_rtt_diff(probe_ip, target_ip, landmark_ip):
     return target_rtt + landmark_rtt - best_rtt - best_rtt, best_ip
 
 
-def get_probes_to_use_for_circles(circles):
-    probes_data = load_json(USER_ANCHORS_FILE)
+def get_probes_to_use_for_circles(circles, vps=None):
+    if vps == None:
+        probes_data = load_json(USER_ANCHORS_FILE)
+    else:
+        probes_data = vps
     lats_lons = {}
     for circle in circles:
         lats_lons[(circle[0], circle[1])] = circle
@@ -210,8 +214,8 @@ def get_probes_to_use_for_circles(circles):
     return res
 
 
-def start_and_get_traceroutes(target_ip, vps, landmarks):
-    probes = get_probes_to_use_for_circles(vps)
+def start_and_get_traceroutes(target_ip, used_vps, landmarks, all_vps):
+    probes = get_probes_to_use_for_circles(used_vps, all_vps)
     tmp_res_traceroutes = multi_traceroutes(landmarks, probes)
 
     # For each traceroute to a landmark we try to get the last common router/IP (r1ip) and the distance d1 + d2 (rtt)

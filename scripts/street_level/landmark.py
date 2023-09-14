@@ -69,7 +69,7 @@ def check_and_get_website_ip(website, protocol):
             '60068', '136620', '395354',
             '32934']
     res = {}
-    asndb = pyasn.pyasn(IP_TO_ASN_FILE)
+    asndb = pyasn.pyasn(str(IP_TO_ASN_FILE))
     try:
         result = dns.resolver.resolve(website)
     except Exception:
@@ -154,7 +154,6 @@ def get_landmarks_with_website_from_lat_lon(lat_arg, lon_arg):
 
 def get_all_landmarks_and_stats_from_points(points):
     dict_website = {}
-    print(f"{len(points)} Points to look for")
     with Pool(8) as pool:
         results = pool.starmap(get_landmarks_with_website_from_lat_lon, points)
         for result in results:
@@ -162,7 +161,6 @@ def get_all_landmarks_and_stats_from_points(points):
                 for elem in result:
                     dict_website[elem[0]] = elem
 
-    print(f"{len(dict_website)} website found")
     unique_website = {}
     for url in dict_website:
         if "://" in url:
@@ -174,8 +172,6 @@ def get_all_landmarks_and_stats_from_points(points):
         website = domain_name.split("/")[0]
         if (website, protocol) not in unique_website:
             unique_website[(website, protocol)] = dict_website[url]
-
-    print(f"{len(unique_website)} unique website found")
 
     args = []
     failed_dns_count = 0
@@ -215,7 +211,6 @@ def get_all_landmarks_and_stats_from_points(points):
 
     with Pool() as pool:
         results = pool.starmap(get_one_website_ip, args)
-        # print(f"results are here {len(results)}")
         for result in results:
             all_websites[result['domain']] = result
             if 'dns-failed' not in result or result['dns-failed']:

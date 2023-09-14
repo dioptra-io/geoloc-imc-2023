@@ -11,10 +11,10 @@ from scripts.street_level.traceroutes_results import (
 )
 
 
-def tier_1(target_ip, res):
+def tier_1(target_ip, res, vps=None):
     st = time.time()
     # Get all circles (from each VP to the target)
-    all_circles = get_circles_to_target(target_ip)
+    all_circles = get_circles_to_target(target_ip, vps)
 
     # Try the recommended internet speed at first
     speed_threshold = 4 / 9
@@ -40,7 +40,7 @@ def tier_1(target_ip, res):
     return res
 
 
-def tier_2(target_ip, res):
+def tier_2(target_ip, res, vps=None):
     st = time.time()
     tier2_points = get_points_in_poly(res["vps"], 36, 5, res["speed_threshold"])
     res["tier2:all_points_count"] = len(tier2_points)
@@ -79,7 +79,7 @@ def tier_2(target_ip, res):
         return res
 
     res["tier2:traceroutes"] = start_and_get_traceroutes(
-        target_ip, res["vps"], res["tier2:landmarks"]
+        target_ip, res["vps"], res["tier2:landmarks"], vps
     )
     all_circles = []
     best_rtt = 5000
@@ -113,7 +113,7 @@ def tier_2(target_ip, res):
     return res
 
 
-def tier_3(target_ip, res):
+def tier_3(target_ip, res, vps=None):
     st = time.time()
     if "tier2:final_circles" not in res:
         res["tier3:lat"] = None
@@ -177,7 +177,7 @@ def tier_3(target_ip, res):
         return res
 
     res["tier3:traceroutes"] = start_and_get_traceroutes(
-        target_ip, res["vps"], res["tier3:landmarks"]
+        target_ip, res["vps"], res["tier3:landmarks"], vps
     )
 
     best_lon = None
@@ -209,7 +209,7 @@ def tier_3(target_ip, res):
     return res
 
 
-def get_all_info_geoloc(target_ip):
+def get_all_info_geoloc(target_ip, vps=None):
     # Init results
     res = {
         "target_ip": target_ip,
@@ -218,7 +218,7 @@ def get_all_info_geoloc(target_ip):
         "tier3:done": False,
         "negative_rtt_included": True,
     }
-    res = tier_1(target_ip, res)
+    res = tier_1(target_ip, res, vps=vps)
 
     # Using tier 1(CBG) results as geolocation if the other steps fail
     res["lat"] = res["tier1:lat"]
@@ -227,7 +227,7 @@ def get_all_info_geoloc(target_ip):
         return res
     res["tier1:done"] = True
 
-    res = tier_2(target_ip, res)
+    res = tier_2(target_ip, res, vps=vps)
 
     # Using tier 2 resultsas geolocation if the last step fails
     if res["tier2:lat"] == None or res["tier2:lon"] == None:
@@ -237,7 +237,7 @@ def get_all_info_geoloc(target_ip):
         res["lat"] = res["tier2:lat"]
         res["lon"] = res["tier2:lon"]
 
-    res = tier_3(target_ip, res)
+    res = tier_3(target_ip, res, vps=vps)
 
     if res["tier3:lat"] != None and res["tier3:lon"] != None:
         res["tier3:done"] = True

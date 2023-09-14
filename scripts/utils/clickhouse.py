@@ -59,6 +59,30 @@ class Clickhouse:
         GROUP BY dst_prefix, src
         """
 
+    def get_all_rtt_to_dst_address_query(self, table: str, target: str
+    ) -> str:
+        return f"""
+        SELECT src_addr, rtt, tstamp 
+        FROM {self.database}.{table} 
+        WHERE resp_addr = '{target}' AND dst_addr = '{target}'
+        """
+    
+    def get_all_rtt_from_probe_to_targets_query(self, table: str, src: str, target1: str, target2: str
+    ) -> str:
+        return f"""
+            SELECT resp_addr, dst_addr, rtt 
+            FROM {self.database}.{table}  
+            WHERE src_addr = '{src}' and (dst_addr =  '{target1}' or dst_addr = '{target2}')
+        """
+        
+    def insert_street_lvl_traceroutes_query(self, table: str) -> str:
+        return f"""
+            INSERT 
+            INTO {self.database}.{table} (
+                src_addr, dst_prefix, dst_addr, resp_addr, 
+                proto, hop, rtt, ttl, prb_id, msm_id, tstamp
+            ) VALUES
+        """
     def insert_native_query(self, table: str, infile_path: Path) -> str:
         """insert data using local clickhouse file"""
         return f"""
@@ -81,10 +105,14 @@ class Clickhouse:
         process.wait()
         logger.info(f"query output: {process.stdout}, {process.stderr}")
 
-    def execute(self, query: str) -> None:
+    def execute(self, query: str, arg_lst=[]) -> None:
         """execute query using clickhouse driver"""
-        return self.client.execute(query, settings=self.settings)
+        if arg_lst == []:
+            return self.client.execute(query, settings=self.settings)
+        else: 
+            return self.client.execute(query, arg_lst, settings=self.settings)
 
+    
     def execute_iter(self, query: str) -> None:
         """use clickhouse driver instead of subprocess"""
         return self.client.execute_iter(query, settings=self.settings)
