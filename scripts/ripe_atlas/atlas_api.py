@@ -1,7 +1,6 @@
 # All functions to query RIPE Atlas API
 
 import json
-import logging
 import time
 import requests
 import ipaddress
@@ -9,6 +8,8 @@ import ipaddress
 from collections import defaultdict, OrderedDict
 from ipaddress import IPv4Network
 from random import randint
+
+from logger import logger
 
 
 class RIPEAtlas(object):
@@ -55,8 +56,8 @@ class RIPEAtlas(object):
                 measurement_id = response["measurements"][0]
                 break
             except KeyError:
-                logging.info(response)
-                logging.warning("Too much measurements.", "Waiting.")
+                logger.info(response)
+                logger.warning("Too much measurements.", "Waiting.")
                 time.sleep(60)
         else:
             raise Exception("Too much measurements. Stopping.")
@@ -301,7 +302,7 @@ def parse_measurements_results(response: list) -> dict:
             }
 
         else:
-            logging.warning(f"no results: {result}")
+            logger.warning(f"no results: {result}")
 
     # order vps per increasing rtt
     for dst_addr in measurement_results:
@@ -329,9 +330,7 @@ def get_measurement_from_id(
 
     response = get_response(url, max_retry=max_retry, wait_time=wait_time)
 
-    measurement_result = parse_measurements_results(response)
-
-    return measurement_result
+    return response
 
 
 def get_measurements_from_tag(tag: str) -> dict:

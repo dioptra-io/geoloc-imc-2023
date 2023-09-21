@@ -124,27 +124,30 @@ def ping_prefixes(
         # load cached prefix results in case measurement was interrupted
         if use_cache:
             cached_results = load_json(cache_file)
-            logger.info(
-                f"initial length targets: {len(targets_per_prefix)}, cached measurements : {len(cached_results)}"
-            )
 
-            # get prefixes out of targets
-            cached_results = [
-                get_prefix_from_ip(target_addr) for target_addr in cached_results
-            ]
-            targets_per_prefix = list(
-                set(targets_per_prefix).difference(set(cached_results))
-            )
+            if cached_results:
+                logger.info(
+                    f"initial length targets: {len(targets_per_prefix)}, cached measurements : {len(cached_results)}"
+                )
 
-            logger.info(
-                f"after removing cached: {len(targets_per_prefix)}, cached measurements : {len(cached_results)}"
-            )
+                # get prefixes out of targets
+                cached_results = [
+                    get_prefix_from_ip(target["address_v4"])
+                    for target in cached_results
+                ]
+                targets_per_prefix = list(
+                    set(targets_per_prefix).difference(set(cached_results))
+                )
+
+                logger.info(
+                    f"after removing cached: {len(targets_per_prefix)}, cached measurements : {len(cached_results)}"
+                )
     except FileNotFoundError:
         logger.info("No cached results available")
         pass
 
     logger.info(
-        f"Starting measurements {str(measurement_uuid)} with parameters: dry_run={dry_run}; nb_targets={len(targets_per_prefix)}; nb_vps={len(vps)}."
+        f"Starting measurements {str(measurement_uuid)} with parameters: dry_run={dry_run}; nb_targets={len(target_prefixes)}; nb_vps={len(vps)}."
     )
 
     # measurement for 3 targets in every target prefixes
@@ -235,11 +238,13 @@ def retrieve_results(
     start_time = time.time()
 
     all_results_available = False
-    while not all_results_available or (time.time() - start_time) < timeout:
+    while not all_results_available:
         # fetch results on API
         measurement_results = get_measurements_from_tag(measurement_uuid)
 
-        logger.info(f"nb measurements retrieved: {len(measurement_results)}")
+        logger.info(
+            f"nb measurements retrieved: {len(measurement_results)} for measurement_uuid : {measurement_uuid}"
+        )
 
         # if we dont have results for all targets
         if (
@@ -250,6 +255,11 @@ def retrieve_results(
             break
         else:
             time.sleep(5)
+
+        current_time = time.time()
+
+        if current_time - start_time > timeout:
+            break
 
     # save results in cache file
     dump_json(measurement_results, out_file)
@@ -263,6 +273,10 @@ def insert_prefix_results(results: list) -> None:
     values_description = (
         "src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto"
     )
+
+    if not results:
+        raise RuntimeError(f"no data to insert, data = {result}")
+
     for result in results:
         try:
             # parse response

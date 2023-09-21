@@ -1,11 +1,11 @@
 # Two classes to instantiate before calling RIPE Atlas API: one for ping measurements and one for traceroute measurements
 
-import logging
 import time
 
 from pprint import pprint
 from copy import copy
 
+from logger import logger
 from scripts.ripe_atlas.atlas_api import RIPEAtlas, wait_for, get_target_hitlist
 from scripts.utils.credentials import get_ripe_atlas_credentials
 
@@ -24,6 +24,7 @@ class PING:
 
         self.account = ripe_credentials["username"]
         self.key = ripe_credentials["secret_key"]
+
         self.driver = RIPEAtlas(self.account, self.key)
 
     def ping_by_prefix(
@@ -51,7 +52,7 @@ class PING:
                 vps[vp_addr]["id"] for vp_addr in vps if vp_addr not in target_addr_list
             ]
 
-            logging.debug(
+            logger.debug(
                 f"starting measurement for {target_prefix} with {[addr for addr in target_addr_list]}"
             )
 
@@ -59,14 +60,17 @@ class PING:
                 for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                     subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
-                    logging.debug(
+                    logger.debug(
                         f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                     )
 
                     if not dry_run:
-                        print("vps list", subset_vp_ids)
                         measurement_id = self.driver.ping(
                             str(target_addr), subset_vp_ids, str(tag), nb_packets
+                        )
+
+                        logger.info(
+                            f"measurement tag: {tag} : started measurement id : {measurement_id}"
                         )
                     else:
                         measurement_id = 404
@@ -76,7 +80,7 @@ class PING:
 
                     # check number of parallel measurements in not too high
                     if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
-                        logging.info(
+                        logger.info(
                             f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                         )
                         tmp_measurement_ids = copy(active_measurements)
@@ -90,7 +94,7 @@ class PING:
                                 active_measurements.remove(id)
                                 time.sleep(0.5)
 
-        logging.info(f"measurement : {tag} done")
+        logger.info(f"measurement : {tag} done")
 
         end_time = time.time()
 
@@ -116,7 +120,7 @@ class PING:
             for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                 subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
-                logging.debug(
+                logger.debug(
                     f"starting measurement for {target_addr} with {len(subset_vp_ids)} vps"
                 )
 
@@ -130,9 +134,13 @@ class PING:
                 active_measurements.append(measurement_id)
                 all_measurement_ids.append(measurement_id)
 
+                logger.info(
+                    f"measurement tag: {tag} : started measurement id : {measurement_id}"
+                )
+
                 # check number of parallel measurements in not too high
                 if len(active_measurements) >= NB_MAX_CONCURRENT_MEASUREMENTS:
-                    logging.info(
+                    logger.info(
                         f"Reached limit for number of concurrent measurements: {len(active_measurements)}"
                     )
                     tmp_measurement_ids = copy(active_measurements)
@@ -146,7 +154,7 @@ class PING:
                             active_measurements.remove(id)
                             time.sleep(0.5)
 
-        logging.info(f"measurement : {tag} done")
+        logger.info(f"measurement : {tag} done")
 
         end_time = time.time()
 
