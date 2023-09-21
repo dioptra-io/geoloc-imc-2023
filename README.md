@@ -1,51 +1,79 @@
-#  🗺️ GeoScale — Open-source tools for client-independent IP addresses geolocation
+#  🗺️ Replication: Towards a Publicly Available Internet scale IP Geolocation Dataset (IMC 2023)
+This repository contains the code needed to reproduce and replicate our results in our [IMC 2023 paper](). 
 
-GeoScale provides code for reproducing two IP addresses geolocation techniques using active measurements on
+Our study replicates the methodology of two papers that obtained outstanding results on geolocating IP addresses in terms of coverage and accuracy in nowadays Internet on the largest publicly available measurement platform, RIPE Atlas. 
+These two papers are: 
 
-1. [Million Scale paper](https://dl.acm.org/doi/abs/10.1145/2398776.2398790?casa_token=8VDXwdGxNbAAAAAA:Aj5Sob6bUjhA0PX4fwtc_5uYZqFQv6iVRH8d_eoW98FA-fdjIJilue0NjZrMEcIimuAF9jeywJr_gQ): Internet scale geolocation technique, large dataset.
+1. [Towards geolocation of millions of IP addresses (IMC 2012)](https://dl.acm.org/doi/abs/10.1145/2398776.2398790)
 
-2. [Street level paper](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf): Highly precise technique, on reduced dataset.
+2. [Towards Street-Level Client-Independent IP Geolocation (NSDI 2011)](https://www.usenix.org/legacy/event/nsdi11/tech/full_papers/Wang_Yong.pdf).
 
-This project is part of a reproductibility publication, which aims to establish new baselines of these two methods, see: [reproductibility paper](). 
+They are called million scale and street level papers throughout this README, as done in our paper. 
 
-This repository offers the posibility to: 
-- reproduce our results "offline" by using our own measurement datasets.
-- run experiments on user defined set of targets and vantage points.
+Our code offers the possibility to: 
+1. reproduce our results using our measurement datasets.
+2. replicate our methodology with different targets and vantage points. For now, only RIPE Atlas vantage points are supported, but it should not be difficult to adapt the code to handle other vantage points and targets. 
 
-Note: Most measurement requires a [RIPE Atlas] account, the plateform we used to run our geolocation measurements.
+## Prerequisites
+Our code performs measurements on RIPE Atlas, so be sure to have an account if you want to replicate our methodology with your own RIPE Atlas measurements.
 
-⚠️ **Measurements on large datasets cost a lot of ressources**, be carefull when running any measurements.
+⚠️ **To replicate our RIPE Atlas measurements, you will need a lot of credits (millions)**. 
 
 
 ## Table of contents
 
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [Install source files](#install-source-files)
-  - [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
-  - [Clickhouse](#clickhouse)
   - [Download datasets](#download-datasets)
+  - [Clone the repository](#clone-the-repository)
+  - [Installer](#installer)
+  - [Install source files](#install-source-files)
+  - [Clickhouse](#clickhouse)
+  - [Settings](#settings)
   - [Further notice](#further-notice)
-- [Publication results analysis](#publication-results-analysis)
+- [Reproduction](#reproduction)
 - [Run your own measurements](#run-your-own-measurements)
 
 ## [Installation](#installation)
-
 
 ### [Requirements](#requirements)
 
 - [Python3.9](https://www.python.org/downloads/) (or above)
 - [Poetry](https://python-poetry.org/docs/)
-- [Clickhouse](https://clickhouse.com/docs/en/install) (optional for measurements?)
+- [Docker](https://docs.docker.com/engine/install/)
 
-### [Install source files](#install-source-files)
 
-Clone the repository:
+### [Download datasets](#download-datasets)
+
+To reproduce our experiences analysis, you can download all necessary files with:
+```bash
+curl -? <some_url_towards_ftp> # TODO: ftp arborescence
+# all files necessary are located in /srv/hugo/geoloc-imc-2023
+```
+TODO: explain which files are being downloaded (their purpose) and where to set them.
+
+### [Clone the reprository](#clone-the-repository)
 
 ```bash
 git clone https://github.com/dioptra-io/geoloc-imc-2023.git
 cd geoloc-imc-2023
 ```
+
+### [Installer](#installer)
+
+You can use the script **install.sh** to:
+- Pull the clickhouse docker image.
+- Start the clickhouse server.
+- Download clickhouse-client binary.
+- Install python project using poetry.
+- Create all tables and populate the database with our measurements.
+
+```bash
+source install.sh
+```
+If the installation fails, all necessary steps to use the project are described below.
+
+### [Install source files](#install-source-files)
 
 GeoScale uses poetry has dependency manager, install the project using:
 ```bash
@@ -54,84 +82,124 @@ poetry lock
 poetry install
 ```
 
-### [RIPE Atlas credentials setup](#ripe-atlas-credentials-setup)
+### [Clickhouse](#clickhouse)
 
-1. set these env variables within a .env file at the root directory of the projects:
+We use docker to run clickhouse server, by default server is listening on localhost on port 8123 and tcp9000. If you prefer using your own docker configuration, please also modify [default.py](default.py)
+```bash
+
+# pull the docker image
+docker pull clickhouse/clickhouse-server:22.6
+
+# start the server
+docker run --rm -d \
+    -v ./clickhouse_files/data:/var/lib/clickhouse/ \
+    -v ./clickhouse_files/logs:/var/log/clickhouse-server/ \
+    -v ./clickhouse_files/users.d:/etc/clickhouse-server/users.d:ro \
+    -v ./clickhouse_files/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh \
+    -p 8123:8123 \
+    -p 9000:9000 \
+    --ulimit nofile=262144:262144 \
+    clickhouse/clickhouse-server:22.6
+```
+
+You can either install [clickhouse-client](https://clickhouse.com/docs/en/install) or download clikhouse client binary (by default, [install.sh](install.sh) download binary file).
+```bash
+curl https://clickhouse.com/ | sh
+mv clickhouse ./clickhouse_files/
+```
+
+Finally, create all necessary tables and populate it with our own measurements with:
+```bash
+python scripts/utils/clickhouse_installer.py 
+```
+
+
+### [Setttings](#settings)
+
+Our tool relies on ENV variables for configuring clickhouse or interacting with RIPE Atlas API.
+An example of necessary ENV variables is given in [.env.example](.env.example). Create your own
+env file with following values:
 ```.env
-RIPE_USERNAME=<your_username>
-RIPE_SECRET_KEY=<your_secret_key>
-```
-2. Export directly with:
-```bash
-export RIPE_USERNAME=<your_username>
-export RIPE_SECRET_KEY=<your_secret_key>
+RIPE_USERNAME=
+RIPE_SECRET_KEY=
 ```
 
-### Clickhouse
-
-TODO: explain setup + insert results files + credentials.
-
-### [Download datasets](#download-datasets)
-
-
-As mentionned GeoScale can be used to reproduce our results. You can download our measurement using:
-
-```bash
-curl -? <some_url_towards_an_uninexting_ftp> # TODO: ftp arborescence
+⚠️ **IF** you used, your own clickhouse configuration, you can modify the following ENV:
 ```
-
-
+# clickhouse settings
+CLICKHOUSE_CLIENT=
+CLICKHOUSE_HOST=
+CLICKHOUSE_DB=
+CLICKHOUSE_USER=
+CLICKHOUSE_PASSWORD=
+```
 ### [Further notice](#notice)
 
-#### Test environement
+#### Test environment
 
-All codes and scripts have been tested on: 
-- CentOS (version)
-- Coer?
-- RAM?
-- etc.
-
-⚠️ Some scripts and analysis are heavy consumers, some lasting for hours potentially. Make sure that your configuration is sufficiently robust.
-
-#### Windows
-
-Furthermore, Linux is recommended but not mandatory.  
-If you use Windows, you might have problems with the Windows path while using pyasn.  
-You also have something to change in the section "Get population data" of create_datasets.ipynb.
-
-## [Publication results analysis](#publication-results-analysis)
+The project has been run on:
+- CentOS 7.5
+- Python 3.9
+- Server with 64GB RAM, 32 cores.
+  
+⚠️ Some scripts and analysis can use a lot of CPU and RAM (tens of GB) and last for hours.
 
 
-Option 2 : Only do the analysis
-- analysis/million_scale.ipynb
-- analysis/tables.ipynb
-- plot/plot.ipynb
+## [Reproducing our results](#reproduction)
 
-Move the measurement to the right directory
+We provide python scripts and jupyter notebooks to reproduce the results and the graphs that we got in replicating the million scale and the street level papers.
 
-Finnally, you can run:
-- this notebook for million scale results analysis
-- this notebook for street level results analysis
+### Million Scale
 
-Both notebooks provides results and figures.
+You can reproduce Million scale results using a jupyter notebook: [million_scale.ipynb](./analysis/million_scale.ipynb)
 
-TODO : setup processor used number when running some scripts.  
+Alternatively you can also use the python script in background, as some steps are vey long to execute (several hours):
+```bash
+nohup python analysis/million_scale.py > output.log &
+```
 
+All analysis results can be found in **./analysis/results**
 
+### Street level
+
+⚠️ The tier 1 of the Street-level replication (See the paper for more details) relies on results calculated by the million scale technique. You need to run the million scale notebook/scripts **before** running those of street-level. 
+
+No additional steps are necessary to reproduce the street-level experiment.
+
+### Generating figures
+
+You can directly use notebooks [plot.ipynb](./analysis/plot.ipynb) and [tables.ipynb](./analysis/tables.ipynb) to produce the figures and tables of our paper. 
+ 
 ## [Run your own measurements](#run-your-own-measurements)
 
-Option 1 : Do your own measurements
-- datasets/create_datasets.ipynb
-- measurements/anchor_measurements.ipynb
-- measurements/probe_measurements.ipynb
-- measurements/probe_and_anchor_measurements.ipynb
-- measurements/landmark_traceroutes.ipynb
+You can also run your own measurements on custom datasets of targets (anchors) and vantage points (probes).
 
-In that case, most of the data will be regenerated while the code is run eventhough you need few basic files.
-After cloning the repository, unzip the (TROUVER UN NOM 2) folder (ET DIRE OU IL SE TROUVE). It contains 2 subfolders.
-- geography -> cities? to remove? 
-- various -> various what?
-Move these two folders into the dataset folder.
+### First step: generate targets and vantage points datasets
+
+The jupyter notebook [create_dataset](./datasets/create_datasets.ipynb) will generate:
+- the set of probes (used as vantage points)
+- the set of anchors (used as targets)
+- filter both sets by removing problematic probes (wrongly geolocated for example)
+
+All generated files will be placed in /datasets/user_datasets.
+
+### Second step: run measurements
+
+With [million_scale_measurements.ipynb](./measurements/million_scale_measurements.ipynb), you can select a subset of vantage points and targets and run measurements on RIPE Atlas.
+
+This script will start measurements for:
+  1. towards all targets from all vantage points
+  2. towards 3 responsive addresses for each target from all vantage points
+
+⚠️ These measurements might cost a lot of RIPE Atlas credits and time if you run them on large datasets (default is only 2 targets and 4 vantage points).
+
+### Third step: analyze your results
+
+Perform the analysis by using the same step described previously on your own measurements results and datasets by setting the boolean variable ```repro = True```, at the beginning of [million_scale.ipynb](./analysis/million_scale.ipynb) (or [million_scale.py](./analysis/million_scale.py) if you are using the script).
+
+
+
+TODO: Street level
 
 ## 📚 Publications
 

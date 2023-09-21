@@ -1,7 +1,6 @@
 # All functions to query RIPE Atlas API
 
 import json
-import logging
 import time
 import requests
 import ipaddress
@@ -9,6 +8,8 @@ import ipaddress
 from collections import defaultdict, OrderedDict
 from ipaddress import IPv4Network
 from random import randint
+
+from logger import logger
 
 
 class RIPEAtlas(object):
@@ -20,7 +21,9 @@ class RIPEAtlas(object):
         self.account = account
         self.key = key
 
-    def ping(self, target, vps, tag: str, nb_packets: int = 3, max_retry: int = 60) -> None:
+    def ping(
+        self, target, vps, tag: str, nb_packets: int = 3, max_retry: int = 60
+    ) -> None:
         """start ping measurement towards target from vps, return Atlas measurement id"""
 
         for _ in range(max_retry):
@@ -53,8 +56,8 @@ class RIPEAtlas(object):
                 measurement_id = response["measurements"][0]
                 break
             except KeyError:
-                logging.info(response)
-                logging.warning("Too much measurements.", "Waiting.")
+                logger.info(response)
+                logger.warning("Too much measurements.", "Waiting.")
                 time.sleep(60)
         else:
             raise Exception("Too much measurements. Stopping.")
@@ -68,7 +71,6 @@ class RIPEAtlas(object):
             return
 
     def traceroute_measurement(self, target, probes_selector, options):
-
         ripe_key, description, tags, is_public, packets, protocol = options
 
         core_parameters = {
@@ -108,7 +110,6 @@ class RIPEAtlas(object):
 
 
 def ripe_traceroute_to_csv(traceroute):
-
     protocols = {"ICMP": 1, "TCP": 6, "UDP": 17}
     rows = []
     try:
@@ -118,8 +119,9 @@ def ripe_traceroute_to_csv(traceroute):
         if af == 4:
             dst_prefix = ".".join(dst_addr.split(".")[:3] + ["0"])
         elif af == 6:
-            dst_prefix = str(ipaddress.ip_network(
-                dst_addr + "/48", strict=False).network_address)
+            dst_prefix = str(
+                ipaddress.ip_network(dst_addr + "/48", strict=False).network_address
+            )
     except (KeyError, ValueError):
         return rows
 
@@ -133,8 +135,19 @@ def ripe_traceroute_to_csv(traceroute):
                 response["ttl"] = 0
             proto = protocols[traceroute["proto"]]
             try:
-                row = (src_addr, dst_prefix, dst_addr, response["from"], proto,
-                       hop["hop"], response["rtt"], response["ttl"], traceroute["prb_id"], traceroute["msm_id"], traceroute["timestamp"])
+                row = (
+                    src_addr,
+                    dst_prefix,
+                    dst_addr,
+                    response["from"],
+                    proto,
+                    hop["hop"],
+                    response["rtt"],
+                    response["ttl"],
+                    traceroute["prb_id"],
+                    traceroute["msm_id"],
+                    traceroute["timestamp"],
+                )
                 row_str = "".join(f",{x}" for x in row)[1:]
                 rows.append(row_str)
             except Exception:
@@ -143,10 +156,14 @@ def ripe_traceroute_to_csv(traceroute):
     return rows
 
 
-def fetch_traceroutes_from_measurement_ids_no_csv(measurement_ids, start=None, stop=None):
+def fetch_traceroutes_from_measurement_ids_no_csv(
+    measurement_ids, start=None, stop=None
+):
     res = []
     for measurement_id in measurement_ids:
-        result_url = f'https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/?'
+        result_url = (
+            f"https://atlas.ripe.net/api/v2/measurements/{measurement_id}/results/?"
+        )
         if start:
             result_url += f"start={start}"
         if stop:
@@ -285,17 +302,19 @@ def parse_measurements_results(response: list) -> dict:
             }
 
         else:
-            logging.warning(f"no results: {result}")
+            logger.warning(f"no results: {result}")
 
-    measurement_results[dst_addr] = OrderedDict(
-        {
-            vp: results
-            for vp, results in sorted(
-                measurement_results[dst_addr].items(),
-                key=lambda item: item[1]["min_rtt"],
-            )
-        }
-    )
+    # order vps per increasing rtt
+    for dst_addr in measurement_results:
+        measurement_results[dst_addr] = OrderedDict(
+            {
+                vp: results
+                for vp, results in sorted(
+                    measurement_results[dst_addr].items(),
+                    key=lambda item: item[1]["min_rtt"],
+                )
+            }
+        )
 
     return measurement_results
 
@@ -311,9 +330,7 @@ def get_measurement_from_id(
 
     response = get_response(url, max_retry=max_retry, wait_time=wait_time)
 
-    measurement_result = parse_measurements_results(response)
-
-    return measurement_result
+    return response
 
 
 def get_measurements_from_tag(tag: str) -> dict:
@@ -323,9 +340,7 @@ def get_measurements_from_tag(tag: str) -> dict:
 
     response = get_response(url, max_retry=1, wait_time=1)
 
-    measurement_results = parse_measurements_results(response)
-
-    return measurement_results
+    return response
 
 
 def get_from_atlas(url: str):
@@ -363,6 +378,7 @@ def get_atlas_probes() -> list:
                 continue
 
             reduced_probe = {
+                "id": probe["id"],
                 "address_v4": probe["address_v4"],
                 "asn_v4": probe["asn_v4"],
                 "country_code": probe["country_code"],
@@ -395,6 +411,7 @@ def get_atlas_anchors() -> list:
                 continue
 
             reduced_anchor = {
+                "id": anchor["id"],
                 "address_v4": anchor["address_v4"],
                 "asn_v4": anchor["asn_v4"],
                 "country_code": anchor["country_code"],
