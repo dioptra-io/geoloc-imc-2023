@@ -45,7 +45,7 @@ Our code performs measurements on RIPE Atlas, so be sure to have an account if y
 
 ### [Download datasets](#download-datasets)
 
-For now, all the data are available on demand. As they are pretty big files, we are currently setting up a FTP for you to get our data.
+You can fetch our data our on FTP ftp.iris.dioptra.io that will give you the ClickHouse tables dumped in CSV format.   
 
 ### [Clone the reprository](#clone-the-repository)
 
