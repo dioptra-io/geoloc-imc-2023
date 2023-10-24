@@ -52,6 +52,8 @@ curl -? <some_url_towards_ftp> # TODO: ftp arborescence
 ```
 TODO: explain which files are being downloaded (their purpose) and where to set them.
 
+For now, all the data are available on demand. As they are pretty big files, we are currently setting up a FTP for you to get our data.
+
 ### [Clone the reprository](#clone-the-repository)
 
 ```bash
