@@ -45,13 +45,6 @@ Our code performs measurements on RIPE Atlas, so be sure to have an account if y
 
 ### [Download datasets](#download-datasets)
 
-To reproduce our experiences analysis, you can download all necessary files with:
-```bash
-curl -? <some_url_towards_ftp> # TODO: ftp arborescence
-# all files necessary are located in /srv/hugo/geoloc-imc-2023
-```
-TODO: explain which files are being downloaded (their purpose) and where to set them.
-
 For now, all the data are available on demand. As they are pretty big files, we are currently setting up a FTP for you to get our data.
 
 ### [Clone the reprository](#clone-the-repository)
