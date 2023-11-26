@@ -199,12 +199,11 @@ TODO: Street level
 ## 📚 Publications
 
 ```bibtex
-@inproceedings{UponValidation,
-  title={Towards a Publicly Available Internet scale IP
-  Geolocation Dataset: a Replication Study},
-  author={Darwich, Rimlinger, Dreyfus, Gouel, Vermeulen},
-  booktitle={Proceedings of the 2023 Internet Measurement Conference},
-  pages={404--404},
+@inproceedings{darwich2023replication,
+  title={Replication: Towards a Publicly Available Internet scale IP Geolocation Dataset},
+  author={Darwich, Omar and Rimlinger, Hugo and Dreyfus, Milo and Gouel, Matthieu and Vermeulen, Kevin},
+  booktitle={Proceedings of the 2023 ACM on Internet Measurement Conference},
+  pages={1--15},
   year={2023}
 }
 ```
