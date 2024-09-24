@@ -28,7 +28,7 @@ pyasn = "^1.6.2"
 clickhouse_driver = "^0.2.2"
 python-dotenv="^0.20.0"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 ipykernel = "^6.25.1"
 
 [build-system]
