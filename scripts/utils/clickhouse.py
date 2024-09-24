@@ -1,4 +1,5 @@
 """clickhouse client"""
+
 import subprocess
 
 from pathlib import Path
@@ -89,8 +90,7 @@ class Clickhouse:
         return f"""
         INSERT INTO {self.database}.{table}
         FROM INFILE '{str(infile_path)}'
-        FORMAT Native
-        """
+        FORMAT Native"""
 
     def insert_csv_query(self, table: str, infile_path: Path) -> str:
         """insert data from csv file"""
@@ -102,20 +102,22 @@ class Clickhouse:
 
     def insert_file(self, query: str) -> None:
         """execute clickhouse insert query as not supported by clickhouse-driver"""
-        cmd = [
-            str(self.client_path),
-            "client",
-        ]
+        cmd = f"{str(self.client_path)} client"
 
         if self.password is not None and self.password != "":
-            cmd.append(f"--password={self.password}")
-        cmd.append(f'--query="{query}"')
+            cmd += f"--password={self.password}"
+        cmd += f' --query="{query}"'
 
         logger.info(f"executing query: {cmd}")
 
-        process = subprocess.Popen(cmd)
-        process.wait()
-        logger.info(f"query output: {process.stdout}, {process.stderr}")
+        ps = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+        if ps.stderr:
+            raise RuntimeError(
+                f"Could not insert data::{cmd}, failed with error: {ps.stderr}"
+            )
+        else:
+            logger.info(f"{cmd}::Successfully executed")
 
     def execute(self, query: str, arg_lst=[]) -> None:
         """execute query using clickhouse driver"""
