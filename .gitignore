@@ -10,7 +10,6 @@
 *.dat
 *.txt
 
-datasets/
 clickhouse_files/data/
 clickhouse_files/logs/
 clickhouse_files/clickhouse

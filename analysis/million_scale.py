@@ -6,7 +6,7 @@ from default import *
 
 if __name__ == "__main__":
     # set to True to use your own datasets/measurements
-    run_repro = False
+    run_repro = True
     if run_repro:
         # DATASET FILES
         PROBES_FILE = REPRO_PROBES_FILE
