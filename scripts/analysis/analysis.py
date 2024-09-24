@@ -432,7 +432,7 @@ def compute_remove_wrongly_geolocated_probes(
     n_violations = sum([len(x) for x in speed_of_internet_violations_per_ip.values()])
     removed_probes = set()
     while n_violations > 0:
-        logger.info("Violations:", n_violations)
+        logger.info(f"Violations: {n_violations}")
         # Remove the IP address with the highest number of SOI violations
         worse_ip, speed_of_internet_violations = max(
             speed_of_internet_violations_per_ip.items(), key=lambda x: len(x[1])
