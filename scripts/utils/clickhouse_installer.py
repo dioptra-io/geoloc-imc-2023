@@ -1,4 +1,5 @@
 """clickhouse client"""
+
 from scripts.utils.clickhouse import Clickhouse
 from logger import logger
 
@@ -85,6 +86,10 @@ if __name__ == "__main__":
     query = clickhouse_driver.create_target_ping_tables(USER_VPS_TO_TARGET_TABLE)
     clickhouse_driver.execute(query)
     logger.info(f"table {USER_VPS_TO_TARGET_TABLE} created")
+
+    query = clickhouse_driver.create_target_ping_tables(USER_MESHED_TABLE)
+    clickhouse_driver.execute(query)
+    logger.info(f"table {USER_MESHED_TABLE} created")
 
     # create prefixes ping table
     query = clickhouse_driver.create_prefixes_ping_tables(USER_VPS_TO_PREFIX_TABLE)

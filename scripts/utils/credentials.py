@@ -1,14 +1,16 @@
 """get all credentials (Clickhouse and RIPE)"""
+
 import json
 import os
 
 from logger import logger
 from dotenv import load_dotenv
 
+load_dotenv()
+
 
 def get_clickhouse_credentials() -> dict:
     """return clickhouse credentials"""
-    load_dotenv()
 
     # try to get credentials with env var directly
     try:

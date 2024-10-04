@@ -10,6 +10,7 @@
 *.dat
 *.txt
 
+measurements/results
 clickhouse_files/data/
 clickhouse_files/logs/
 clickhouse_files/clickhouse
