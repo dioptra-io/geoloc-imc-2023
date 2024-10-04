@@ -11,18 +11,15 @@ from scripts.utils.measurement_utils import (
     get_target_prefixes,
     ping_prefixes,
     ping_targets,
-    meshed_pings,
     retrieve_results,
     insert_prefix_results,
     insert_target_results,
-    insert_meshed_results,
 )
 from default import (
     USER_ANCHORS_FILE,
     USER_HITLIST_FILE,
     PREFIX_MEASUREMENT_RESULTS,
     TARGET_MEASUREMENT_RESULTS,
-    MESHED_MEASUREMENT_RESULTS,
     MEASUREMENT_CONFIG_PATH,
 )
 
@@ -36,14 +33,12 @@ NB_VPS = 10
 EXPERIMENT_UUID = "3992e46c-73cf-4a7b-9428-3198856039a9"
 TARGET_MESAUREMENT_UUID = "03eb9559-88fe-41cb-b62c-4c07d1d5acb8"
 PREFIX_MESAUREMENT_UUID = "a09709aa-be76-4687-852e-64e8090bee70"
-MESHED_MESAUREMENT_UUID = "1b64f93b-399b-4fdf-a2ed-4aaaac4fd616"
 CONFIG_PATH = MEASUREMENT_CONFIG_PATH / f"{EXPERIMENT_UUID}.json"
 
 
 def main_measurements() -> None:
     """perform all measurements related with million scale"""
     # set any of these var to execute the corresponding fct
-    do_meshed_pings = True
     do_target_pings = True
     do_target_prefix_pings = True
 
@@ -52,7 +47,8 @@ def main_measurements() -> None:
     vps = load_vps(USER_ANCHORS_FILE, nb_vps=NB_VPS)
 
     # every anchors /24 subnet
-    target_prefixes = get_target_prefixes(targets)
+    target_addrs = [t["address_v4"] for t in targets]
+    target_prefixes = get_target_prefixes(target_addrs)
     # responsive IP addresses in all /24 prefixes
     targets_per_prefix = load_json(USER_HITLIST_FILE)
 
@@ -72,32 +68,13 @@ def main_measurements() -> None:
             experiment_uuid=EXPERIMENT_UUID,
             target_measurement_uuid=TARGET_MESAUREMENT_UUID,
             prefix_measurement_uuid=PREFIX_MESAUREMENT_UUID,
-            meshed_measurement_uuid=MESHED_MESAUREMENT_UUID,
         )
-        save_measurement_config(measurement_config, CONFIG_PATH)
-
-    if do_meshed_pings:
-        # update targers with every other VPs
-        targets.extend(vps)
-
-        logger.info(f"Starting meshed pigns :: {MESHED_MESAUREMENT_UUID}")
-        logger.info(f"Nb targets            :: {len(targets)}")
-        logger.info(f"Nb vps                :: {len(vps)}")
-
-        # measurement configuration for retrieval
-        meshed_pings(
-            measurement_uuid=MESHED_MESAUREMENT_UUID,
-            measurement_config=measurement_config,
-            targets=targets,
-            vps=vps,
-            use_cache=True,
-        )
-
-        # update config
         save_measurement_config(measurement_config, CONFIG_PATH)
 
     if do_target_pings:
-        logger.info(f"Starting targets pigns :: {MESHED_MESAUREMENT_UUID}")
+        vps.extend(targets)
+
+        logger.info(f"Starting targets pigns :: {TARGET_MESAUREMENT_UUID}")
         logger.info(f"Nb targets             :: {len(targets)}")
         logger.info(f"Nb vps                 :: {len(vps)}")
 
@@ -114,7 +91,7 @@ def main_measurements() -> None:
         save_measurement_config(measurement_config, CONFIG_PATH)
 
     if do_target_prefix_pings:
-        logger.info(f"Starting prefix pigns :: {MESHED_MESAUREMENT_UUID}")
+        logger.info(f"Starting prefix pigns :: {PREFIX_MESAUREMENT_UUID}")
         logger.info(f"Nb targets             :: {len(targets)}")
         logger.info(f"Nb prefixes            :: {len(target_prefixes)}")
         logger.info(f"Nb vps                 :: {len(vps)}")
@@ -130,27 +107,11 @@ def main_measurements() -> None:
 
 def main_retrieve_results() -> None:
     """retrieve all measurement results related with million scale"""
-    retrieve_meshed_measurements = True
     retrieve_target_measurements = True
     retrieve_prefix_measurements = True
 
     measurement_config = load_json(CONFIG_PATH)
     logger.info(f"{measurement_config}")
-
-    if retrieve_meshed_measurements:
-        meshed_measurement_uuid = measurement_config["meshed_measurements"][
-            "measurement_uuid"
-        ]
-
-        logger.info(
-            f"retrieving results for measurement ids: {meshed_measurement_uuid}"
-        )
-
-        # sometimes, not all probes give output, reduce timeout if you do not want to wait for too long
-        response = retrieve_results(MESHED_MESAUREMENT_UUID, MESHED_MEASUREMENT_RESULTS)
-
-        # will output into user tables
-        insert_meshed_results(response)
 
     if retrieve_target_measurements:
         target_measurement_uuid = measurement_config["target_measurements"][

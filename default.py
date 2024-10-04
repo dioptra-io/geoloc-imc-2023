@@ -84,7 +84,6 @@ STREET_LEVEL_TRACEROUTES_TABLE = "street_lvl_traceroutes"
 # tables to store user measurements
 USER_VPS_TO_PREFIX_TABLE = "user_vps_to_prefix"
 USER_VPS_TO_TARGET_TABLE = "user_vps_to_target"
-USER_MESHED_TABLE = "user_meshed_target"
 
 USER_TARGET_TO_LANDMARKS_PING_TABLE = "user_targets_to_landmarks_pings"
 USER_ANCHORS_MESHED_TRACEROUTE_TABLE = "user_anchors_meshed_traceroutes"
@@ -216,9 +215,6 @@ PREFIX_MEASUREMENT_RESULTS: Path = (
 )
 TARGET_MEASUREMENT_RESULTS: Path = (
     MEASUREMENTS_MILLION_SCALE_PATH / "target_measurement_results.json"
-)
-MESHED_MEASUREMENT_RESULTS: Path = (
-    MEASUREMENTS_MILLION_SCALE_PATH / "meshed_measurement_results.json"
 )
 
 ############## STREET LEVEL FILES

@@ -42,21 +42,25 @@ class PING:
         active_measurements = []
         all_measurement_ids = []
         start_time = time.time()
-        for _, target_prefix in enumerate(target_prefixes):
+        for i, target_prefix in enumerate(target_prefixes):
+
+            logger.info(
+                f"Ping for target prefix:: {target_prefix}, {i+1}/{len(target_prefixes)}"
+            )
+
             # get target_addr_list
             target_addr_list = get_target_hitlist(
                 target_prefix, nb_targets, targets_per_prefix
             )
 
-            vp_ids = [
-                vps[vp_addr]["id"] for vp_addr in vps if vp_addr not in target_addr_list
-            ]
+            # get vps id for measurement, remove target if in vps
 
             logger.debug(
                 f"starting measurement for {target_prefix} with {[addr for addr in target_addr_list]}"
             )
 
             for target_addr in target_addr_list:
+                vp_ids = [vp["id"] for vp in vps if vp["address_v4"] != target_addr]
                 for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                     subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]
 
@@ -102,8 +106,8 @@ class PING:
 
     def ping_by_target(
         self,
-        targets: list,
-        vps: dict,
+        targets: list[dict],
+        vps: list[dict],
         tag: str,
         nb_packets: int = NB_PACKETS,
         dry_run: bool = False,
@@ -113,9 +117,11 @@ class PING:
         active_measurements = []
         all_measurement_ids = []
         start_time = time.time()
-        for _, target_addr in enumerate(targets):
+        for i, target_addr in enumerate(targets):
+            logger.info(f"Ping for target:: {target_addr}, {i+1}/{len(targets)}")
+
             # get vps id for measurement, remove target if in vps
-            vp_ids = [vps[vp_addr]["id"] for vp_addr in vps if vp_addr != target_addr]
+            vp_ids = [vp["id"] for vp in vps if vp["address_v4"] != target_addr]
 
             for i in range(0, len(vp_ids), MAX_NUMBER_OF_VPS):
                 subset_vp_ids = vp_ids[i : i + MAX_NUMBER_OF_VPS]

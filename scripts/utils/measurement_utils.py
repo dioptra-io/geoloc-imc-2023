@@ -17,14 +17,12 @@ from scripts.utils.clickhouse import Clickhouse
 from default import (
     PREFIX_MEASUREMENT_RESULTS,
     TARGET_MEASUREMENT_RESULTS,
-    MESHED_MEASUREMENT_RESULTS,
     USER_VPS_TO_PREFIX_TABLE,
     USER_VPS_TO_TARGET_TABLE,
-    USER_MESHED_TABLE,
 )
 
 
-def load_targets(target_file_path: Path, nb_target: int) -> list:
+def load_targets(target_file_path: Path, nb_target: int = -1) -> list:
     """get a file as entry, return a list of ip target"""
     targets = load_json(target_file_path)
 
@@ -33,12 +31,10 @@ def load_targets(target_file_path: Path, nb_target: int) -> list:
 
     subset_targets = random.sample(targets, k=nb_target)
 
-    measurement_targets = [target["address_v4"] for target in subset_targets]
-
-    return measurement_targets
+    return subset_targets
 
 
-def load_vps(vps_file_path: Path, nb_vps: int) -> dict:
+def load_vps(vps_file_path: Path, nb_vps: int = -1) -> list:
     """load vps from file, return list of vps"""
     vps = load_json(vps_file_path)
 
@@ -47,18 +43,13 @@ def load_vps(vps_file_path: Path, nb_vps: int) -> dict:
 
     subset_vps = random.sample(vps, k=nb_vps)
 
-    measurement_vps = {}
-    for vp in subset_vps:
-        measurement_vps[vp["address_v4"]] = vp
-
-    return measurement_vps
+    return subset_vps
 
 
 def get_measurement_config(
     experiment_uuid: UUID,
     prefix_measurement_uuid: UUID,
     target_measurement_uuid: UUID,
-    meshed_measurement_uuid: UUID,
     targets: list,
     target_prefixes: list,
     vps: dict,
@@ -87,12 +78,6 @@ def get_measurement_config(
             "vps": vps,
             "end_time": None,
         },
-        "meshed_measurements": {
-            "measurement_uuid": str(meshed_measurement_uuid),
-            "targets": targets,
-            "vps": vps,
-            "end_time": None,
-        },
     }
 
 
@@ -103,7 +88,6 @@ def save_measurement_config(measurement_config: dict, out_path: Path) -> None:
         if (
             measurement_config["prefix_measurements"]["end_time"] is not None
             and measurement_config["target_measurements"]["end_time"] is not None
-            and measurement_config["meshed_pings"]["end_time"] is not None
         ):
             measurement_config["end_time"] = str(datetime.now())
             measurement_config["status"] = "finished"
@@ -122,8 +106,8 @@ def ping_prefixes(
     measurement_uuid: UUID,
     measurement_config: dict,
     target_prefixes: list,
-    targets_per_prefix: dict,
-    vps: dict,
+    targets_per_prefix: dict[list],
+    vps: list[dict],
     dry_run: bool = False,
     use_cache: bool = True,
     cache_file: Path = PREFIX_MEASUREMENT_RESULTS,
@@ -182,8 +166,8 @@ def ping_prefixes(
 def ping_targets(
     measurement_uuid: UUID,
     measurement_config: dict,
-    targets: list,
-    vps: dict,
+    targets: list[dict],
+    vps: list[dict],
     dry_run: bool = False,
     use_cache: bool = True,
     cache_file: Path = TARGET_MEASUREMENT_RESULTS,
@@ -192,54 +176,7 @@ def ping_targets(
 
     pinger = PING()
 
-    try:
-        if use_cache:
-            cached_results = load_json(cache_file)
-            logger.info(
-                f"initial length targets: {len(targets)}, cached measurements : {len(cached_results)}"
-            )
-
-            cached_results = [c["dst_addr"] for c in cached_results]
-
-            targets = list(
-                set([t["address_v4"] for t in targets]).difference(set(cached_results))
-            )
-
-            logger.info(
-                f"after removing cached: {len(targets)}, cached measurements : {len(cached_results)}"
-            )
-    except FileNotFoundError:
-        logger.info("No cached results available")
-        pass
-
-    logger.info(
-        f"Starting measurements {str(measurement_uuid)} with parameters: dry_run={dry_run}; nb_targets={len(targets)}; nb_vps={len(vps)}."
-    )
-
-    ids, start_time, end_time = pinger.ping_by_target(
-        targets=targets, vps=vps, tag=measurement_uuid, dry_run=dry_run
-    )
-
-    # overwrite ids
-    if "ids" in measurement_config["target_measurements"]:
-        ids.extend(measurement_config["target_measurements"]["ids"])
-
-    measurement_config["target_measurements"]["start_time"] = start_time
-    measurement_config["target_measurements"]["end_time"] = end_time
-
-
-def meshed_pings(
-    measurement_uuid: UUID,
-    measurement_config: dict,
-    targets: list,
-    vps: dict,
-    dry_run: bool = False,
-    use_cache: bool = True,
-    cache_file: Path = MESHED_MEASUREMENT_RESULTS,
-) -> None:
-    """ping all targets using all vps"""
-
-    pinger = PING()
+    targets = [t["address_v4"] for t in targets]
 
     try:
         if use_cache:
@@ -268,11 +205,11 @@ def meshed_pings(
     )
 
     # overwrite ids
-    if "ids" in measurement_config["meshed_measurements"]:
-        ids.extend(measurement_config["meshed_measurements"]["ids"])
+    if "ids" in measurement_config["target_measurements"]:
+        ids.extend(measurement_config["target_measurements"]["ids"])
 
-    measurement_config["meshed_measurements"]["start_time"] = start_time
-    measurement_config["meshed_measurements"]["end_time"] = end_time
+    measurement_config["target_measurements"]["start_time"] = start_time
+    measurement_config["target_measurements"]["end_time"] = end_time
 
 
 def get_latest_measurements(config_path: Path) -> dict:
@@ -395,41 +332,4 @@ def insert_target_results(results: list) -> None:
 
     logger.info(
         f"Target measurements successfully inserted in table : {USER_VPS_TO_TARGET_TABLE}"
-    )
-
-
-def insert_meshed_results(results: list) -> None:
-    """insert prefixes results with CSV value method"""
-    rows = []
-    values_description = (
-        "src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto"
-    )
-    for result in results:
-        # parse response
-        src = result["src_addr"]
-        dst = result["dst_addr"]
-        prb_id = result["prb_id"]
-        date = result["timestamp"]
-        sent = result["sent"]
-        rcvd = result["rcvd"]
-        rtts = (
-            [rtt["rtt"] for rtt in result["result"]]
-            if "rtt" in result["result"]
-            else [-1]
-        )
-        min = result["min"]
-        mean = result["avg"]
-        msm_id = result["msm_id"]
-        proto = 0
-
-        row = [src, dst, prb_id, date, sent, rcvd, rtts, min, mean, msm_id, proto]
-
-        rows.append(row)
-
-    clickhouse = Clickhouse()
-    query = clickhouse.insert_from_values_query(USER_MESHED_TABLE, values_description)
-    clickhouse.insert_from_values(query, rows)
-
-    logger.info(
-        f"Target measurements successfully inserted in table : {USER_MESHED_TABLE}"
     )
